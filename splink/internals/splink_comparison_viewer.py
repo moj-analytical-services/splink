@@ -4,6 +4,7 @@ import json
 import os
 from typing import TYPE_CHECKING, Any
 
+from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.misc import EverythingEncoder, read_resource
 
 from .predict import _combine_prior_and_mws
@@ -154,7 +155,7 @@ def comparison_viewer_table_sqls(
     # this optimisation path relies on rowid but
     # that's only available for duckdb tables
     if (
-        linker._db_api.sql_dialect.sql_dialect_str == "duckdb"
+        isinstance(linker._db_api, DuckDBAPI)
         and linker._db_api._materialisation == "table"
     ):
         return _duckdb_comparison_viewer_table_sqls(
