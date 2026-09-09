@@ -95,19 +95,6 @@ def _duckdb_comparison_viewer_table_sqls(
     uid_col_lr_names = uid_cols_l + uid_cols_r
     uid_expr = " || '-' ||".join(f"pred.{name}" for name in uid_col_lr_names)
 
-    # Logical pair keys also work for registered and Parquet-backed views,
-    # which have no DuckDB hidden rowid. Keep the bounded arg_min sampling.
-    pair_key = (
-        "struct_pack("
-        + ", ".join(f"key_{i} := {name}" for i, name in enumerate(uid_col_lr_names))
-        + ")"
-    )
-    pair_join = " AND ".join(
-        f"pred.{name} IS NOT DISTINCT FROM keys.example_key.key_{i}"
-        for i, name in enumerate(uid_col_lr_names)
-    )
-    pair_order = ", ".join(f"pred.{name}" for name in uid_col_lr_names)
-
     gamma_columns = [c._gamma_column_name for c in linker._settings_obj.comparisons]
     gam_concat = " || ',' || ".join(gamma_columns)
     groupby_cols = " , ".join(gamma_columns)
@@ -130,7 +117,7 @@ def _duckdb_comparison_viewer_table_sqls(
            {mw_final_no_tf} as sort_avg_match_weight,
            random() as rand_order,
            row_number() over (
-               partition by keys.gam_concat order by {pair_order}
+               partition by keys.gam_concat order by pred.rowid
            ) as row_example_index,
            cvd.sum_gam,
            cvd.count_rows_in_comparison_vector_group as count,
@@ -138,14 +125,14 @@ def _duckdb_comparison_viewer_table_sqls(
     from (
         select
             {gam_concat} as gam_concat,
-            unnest(arg_min({pair_key}, {pair_key}, {example_rows_per_category}))
-                as example_key
+            unnest(arg_min(rowid, rowid, {example_rows_per_category}))
+                as example_rowid
         from __splink__df_predict
         group by {groupby_cols}
         having count(*) >= {minimum_comparison_vector_count}
     ) as keys
     inner join __splink__df_predict as pred
-        on {pair_join}
+        on pred.rowid = keys.example_rowid
     left join __splink__df_comparison_vector_distribution as cvd
         on keys.gam_concat = cvd.gam_concat
     """
@@ -163,7 +150,10 @@ def comparison_viewer_table_sqls(
     example_rows_per_category: int = 2,
     minimum_comparison_vector_count: int = 0,
 ) -> list[dict[str, str]]:
-    if linker._db_api.sql_dialect.sql_dialect_str == "duckdb":
+    if (
+        linker._db_api.sql_dialect.sql_dialect_str == "duckdb"
+        and linker._db_api._materialisation == "table"
+    ):
         return _duckdb_comparison_viewer_table_sqls(
             linker,
             example_rows_per_category,

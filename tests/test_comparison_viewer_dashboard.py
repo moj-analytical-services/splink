@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker
 from splink.internals.comparison_vector_distribution import (
@@ -38,7 +40,8 @@ def test_comparison_viewer_dashboard(tmp_path, fake_1000):
 
 
 @mark_with_dialects_including("duckdb")
-def test_comparison_viewer_table():
+@pytest.mark.parametrize("materialisation", ["table", "parquet"])
+def test_comparison_viewer_table(tmp_path, materialisation):
     # contrived input data to get 10 name agreements
     # and 5 name disagreements.
     data = {
@@ -65,7 +68,12 @@ def test_comparison_viewer_table():
         "retain_intermediate_calculation_columns": True,
     }
 
-    db_api = DuckDBAPI()
+    db_api = DuckDBAPI(
+        materialisation=materialisation,
+        materialisation_dir=tmp_path / "backing"
+        if materialisation == "parquet"
+        else None,
+    )
     df_sdf = db_api.register(data)
 
     linker = Linker(
@@ -84,6 +92,12 @@ def test_comparison_viewer_table():
         4,
         minimum_comparison_vector_count=0,
     )
+    if materialisation == "table":
+        assert len(sqls) == 1
+        assert "pred.rowid = keys.example_rowid" in sqls[0]["sql"]
+    else:
+        assert len(sqls) == 4
+        assert all("rowid" not in sql_info["sql"] for sql_info in sqls)
     pipeline.enqueue_list_of_sqls(sqls)
 
     df = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
