@@ -43,7 +43,7 @@ $$
 m = Pr(\textsf{Observation | Records match})
 $$
 
-For example, consider the the $m$ probability of a match on Date of Birth (DOB). For two records that are a match, what is the probability that:
+For example, consider the $m$ probability of a match on Date of Birth (DOB). For two records that are a match, what is the probability that:
 
 - **DOB is the same**:
   - Almost 100%, say 98% $\Longrightarrow m \approx 0.98$
