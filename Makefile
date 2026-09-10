@@ -14,7 +14,7 @@ typecheck:
 	uv run mypy splink
 
 typecheck-dev:
-	uv run ty check splink
+	uv run --group typechecking-dev ty check splink
 
 check: format-check lint typecheck
 
