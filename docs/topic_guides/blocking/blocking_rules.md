@@ -144,6 +144,40 @@ count_comparisons_from_blocking_rules(
 
     If you omit the `blocking_rules` argument, the `blocking_rules_to_generate_predictions` from the linker's settings are analysed instead. The same module also provides `linker.blocking_analysis.chart_comparisons_from_blocking_rules(...)` to visualise the cumulative number of comparisons, and `linker.blocking_analysis.n_largest_blocks(...)` to find the values producing the largest blocks.
 
+#### Measuring the importance of prediction blocking rules
+
+After making predictions, you can measure the order-independent contribution of
+each prediction blocking rule:
+
+```py
+df_predict = linker.inference.predict()
+importance = linker.blocking_analysis.blocking_rule_importance(df_predict)
+```
+
+To compare these marginal contributions visually, create a chart ordered from
+the largest to the smallest contribution:
+
+```py
+chart = linker.blocking_analysis.chart_blocking_rule_importance(df_predict)
+chart.save("blocking_rule_marginal_contributions.html")
+```
+
+The exact marginal pair count is shown at the end of each bar, including zero.
+The blocking-rule labels are shown on the left of the chart.
+
+For every candidate pair, this analysis checks all the blocking rules rather than
+using `match_key`, which records only the first rule that generated the pair. The
+result reports each rule's total and overlapping comparisons, its marginal
+comparisons (pairs found by no other rule), and the sum of `match_probability` over
+those marginal pairs. That sum estimates how many true matches would be lost if the
+rule were removed, assuming the model probabilities are calibrated.
+
+An `is_redundant` value of `True` means the rule can be removed on its own without
+changing the candidate-pair set. If several rules are marked redundant, remove one
+at a time and rerun the analysis: equivalent rules can each be covered by the other,
+but removing both would lose their shared pairs. The analysis evaluates every rule
+separately, so it can be expensive and requires the unfiltered prediction output.
+
 ### More complex blocking rules
 
 It is possible to use more complex blocking rules that use non-equijoin conditions.  For example, you could use a blocking rule that uses a fuzzy matching function:
