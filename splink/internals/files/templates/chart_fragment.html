@@ -13,6 +13,7 @@
     outputDiv = document.getElementById("@@{output_div}");
   }
   const paths = @@{paths};
+  const integrities = @@{integrities};
   // Share pending loads as well as completed loads across concurrent outputs.
   const loads = window.__splinkChartLoads || (window.__splinkChartLoads = {});
   function maybeLoadScript(lib) {
@@ -21,6 +22,8 @@
       loads[url] = new Promise(function(resolve, reject) {
         const s = document.createElement('script');
         s.async = true;
+        s.integrity = integrities[lib];
+        s.crossOrigin = 'anonymous';
         s.onload = resolve;
         s.onerror = () => {
           delete loads[url];
@@ -41,7 +44,15 @@
     return Promise.resolve().then(() => embed(outputDiv, spec, embedOpt)).catch(showError);
   }
   if (typeof define === 'function' && define.amd) {
-    requirejs.config({paths});
+    requirejs.config({
+      paths,
+      onNodeCreated: function(node, config, moduleName) {
+        if (integrities[moduleName]) {
+          node.integrity = integrities[moduleName];
+          node.crossOrigin = 'anonymous';
+        }
+      }
+    });
     require(['vega-embed'], displayChart, showError);
   } else {
     maybeLoadScript('vega')

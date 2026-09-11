@@ -214,22 +214,6 @@ class SplinkChart(ABC, Generic[T]):
         return result
 
 
-class _SpecChart(SplinkChart[ChartRecord]):
-    """A chart whose complete specification is already assembled."""
-
-    chart_spec_file = ""
-
-    def __init__(self, spec):
-        super().__init__([])
-        self._spec = spec
-
-    @property
-    def chart_dict(self):
-        from copy import deepcopy
-
-        return self.alter_spec_height_width(deepcopy(self._spec))
-
-
 class MatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
     @property
     def chart_spec_file(self) -> str:
@@ -728,44 +712,3 @@ class TFAdjustmentChart(SplinkChart[ChartRecord]):
         chart_spec["config"]["params"][0]["bind"]["options"] = self.tf_levels
         chart_spec["config"]["params"][0]["bind"]["labels"] = self.labels
         return chart_spec
-
-
-def _comparator_score_chart(similarity_records, distance_records, as_dict=False):
-    chart_path = "comparator_score_chart.json"
-    chart = load_chart_definition(chart_path)
-
-    chart["datasets"]["data-similarity"] = similarity_records
-    chart["datasets"]["data-distance"] = distance_records
-
-    return chart if as_dict else _SpecChart(chart)
-
-
-def _comparator_score_threshold_chart(
-    similarity_records,
-    distance_records,
-    similarity_threshold,
-    distance_threshold,
-    as_dict=False,
-):
-    chart_path = "comparator_score_threshold_chart.json"
-    chart = load_chart_definition(chart_path)
-
-    chart["params"][0]["value"] = similarity_threshold
-    chart["params"][1]["value"] = distance_threshold
-
-    chart["hconcat"][0]["layer"][0]["title"]["subtitle"] = f">= {similarity_threshold}"
-    chart["hconcat"][1]["layer"][0]["title"]["subtitle"] = f"<= {distance_threshold}"
-
-    chart["datasets"]["data-similarity"] = similarity_records
-    chart["datasets"]["data-distance"] = distance_records
-
-    return chart if as_dict else _SpecChart(chart)
-
-
-def _phonetic_match_chart(records, as_dict=False):
-    chart_path = "phonetic_match_chart.json"
-    chart = load_chart_definition(chart_path)
-
-    chart["datasets"]["data-phonetic"] = records
-
-    return chart if as_dict else _SpecChart(chart)

@@ -10,6 +10,15 @@ from splink.internals.misc import read_resource
 
 # Keep CDN and packaged runtime versions aligned.
 CHART_LIBRARIES = {"vega": "5.31.0", "vega-lite": "5.2.0", "vega-embed": "6.20.2"}
+CHART_LIBRARY_INTEGRITIES = {
+    "vega": "sha384-Aetxbwjx5EnbMsEyBnb1wt8zDBbF6YNdfK+1wmv97rUqFETerVNhJhJ3zYshzN9J",
+    "vega-lite": (
+        "sha384-tU6fj0fI2gxrcWwC7uBMp70QvipC9ukjcXyOs85VMmdCq33CrA7xQ3nJkJu0SmDm"
+    ),
+    "vega-embed": (
+        "sha384-oP1rwLY7weRZ5jvAVzfnJsAn+sYA69rQC4geH82Y9oMvr8ruA1oeE9Jkft2noCHR"
+    ),
+}
 
 
 class _HTMLTemplate(Template):
@@ -59,6 +68,7 @@ def chart_html(spec, *, inline=False, fullhtml=False):
                 for name, version in CHART_LIBRARIES.items()
             }
         ),
+        "integrities": json_for_html(CHART_LIBRARY_INTEGRITIES),
     }
     if inline:
         libraries = load_chart_libraries()
