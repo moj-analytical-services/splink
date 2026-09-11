@@ -21,8 +21,13 @@ def render_html_template(resource, values):
 
 
 def json_for_html(value, *, cls=None):
-    """Encode script data without allowing an HTML closing script tag."""
-    return json.dumps(value, cls=cls).replace("<", r"\u003c")
+    """Encode data for a script element without permitting HTML delimiters."""
+    return (
+        json.dumps(value, cls=cls)
+        .replace("<", r"\u003c")
+        .replace(">", r"\u003e")
+        .replace("&", r"\u0026")
+    )
 
 
 def load_chart_libraries():
