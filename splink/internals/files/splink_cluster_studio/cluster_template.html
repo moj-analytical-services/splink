@@ -6,7 +6,7 @@
 <title>Splink cluster studio</title>
 <meta name="description" content="desc" />
 
-<style>{{custom_css}}</style>
+<style>@@{custom_css}</style>
 
 
 
@@ -19,23 +19,29 @@
 <body>
 
 
-{# The observable standard library #}
-{# This is usually made available automatically within an observable notebook #}
-{# Unfortunately, when used in a notebook, it tries to retrieve #}
-{# libraries from online CDNs. #}
-{# https://github.com/observablehq/runtime#Runtime #}
 
-{# The issue is that within the notebook, it's using functions from the stdlib like #}
-{# the html`` template literal, and Generators.observe #}
-{# We could bundle those in splink_vis_utils, but then they'd all have to be prefixed #}
-{# with splink_vis_utils like splink_vis_utils.html, and I struggled to get this to work #}
 
-{# So instead, I inline the stdlib code #}
-<script>{{stdlib}}</script>
 
-{# And then globally load the functions we need #}
-{# This also seems to avoid the problem of stdlib trying and failing to load d3 from a CDNs #}
-{# and causing the whole notebook to error #}
+
+
+
+
+
+
+
+
+
+<!--
+  The Observable standard library is normally supplied by an Observable notebook.
+  In an HTML dashboard it can otherwise fetch dependencies from CDNs, so Splink
+  inlines it and exposes the functions used by the bundled notebook below.
+  https://github.com/observablehq/runtime#runtime
+-->
+<script>@@{stdlib}</script>
+
+
+
+
 
 
 <script>
@@ -46,33 +52,29 @@ html = lib.html()
 Mutable = lib.Mutable()
 </script>
 
-<script>{{vega}}</script>
-<script>{{vegalite}}</script>
-<script>{{embed}}</script>
-<script>{{svu_text}}</script>
+<script>@@{vega}</script>
+<script>@@{vegalite}</script>
+<script>@@{embed}</script>
+<script>@@{svu_text}</script>
 
 
 
 
 <script>
- raw_nodes_data = {{raw_node_data}};
- raw_edges_data = {{raw_edge_data}};
+ raw_nodes_data = @@{raw_node_data};
+ raw_edges_data = @@{raw_edge_data};
 
- {% if raw_clusters_data is defined %}
-    raw_clusters_data = {{raw_clusters_data}};
- {% else %}
-    raw_clusters_data = null
- {% endif %}
 
- {% if named_clusters is defined %}
-    named_clusters = {{named_clusters}};
- {% else %}
-    named_clusters = null
- {% endif %}
+    raw_clusters_data = @@{raw_clusters_data};
 
- splink_settings = {{splink_settings}};
 
- svu_options = {{svu_options}};
+
+    named_clusters = @@{named_clusters};
+
+
+ splink_settings = @@{splink_settings};
+
+ svu_options = @@{svu_options};
 </script>
 
 <div id="outer_container">
@@ -123,18 +125,13 @@ Mutable = lib.Mutable()
 <script type="module">
 
 
-{% if bundle_observable_notebook %}
+
 
 new splink_vis_utils.Runtime({}).module(splink_vis_utils.define_cluster, name => {
 
 
 
-{% else %}
 
-import define from "https://api.observablehq.com/@robinl/to-embed-in-splink-outputs.js?v=3";
-new splink_vis_utils.Runtime().module(define, name => {
-
-{% endif %}
 
 
 
@@ -177,5 +174,4 @@ if (name === "node_history_table") return new splink_vis_utils.Inspector(documen
 
 </body>
 </html>
-
 

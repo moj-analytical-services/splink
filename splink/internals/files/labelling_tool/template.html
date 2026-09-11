@@ -18,24 +18,29 @@
 
 <body>
 
-    {# The observable standard library #}
-    {# This is usually made available automatically within an observable notebook #}
-    {# Unfortunately, when used in a notebook, it tries to retrieve #}
-    {# libraries from online CDNs. #}
-    {# https://github.com/observablehq/runtime#Runtime #}
 
-    {# The issue is that within the notebook, it's using functions from the stdlib like #}
-    {# the html`` template literal, and Generators.observe #}
-    {# We could bundle those in splink_vis_utils, but then they'd all have to be prefixed #}
-    {# with splink_vis_utils like splink_vis_utils.html, and I struggled to get this to work #}
 
-    {# So instead, I inline the stdlib code #}
-    <script>{{stdlib}}</script>
-    <script>{{d3}}</script>
 
-    {# And then globally load the functions we need #}
-    {# This also seems to avoid the problem of stdlib trying and failing to load d3 from a CDNs #}
-    {# and causing the whole notebook to error #}
+
+
+
+
+
+
+
+
+
+    <!--
+      The Observable standard library is normally supplied by an Observable notebook.
+      In this HTML dashboard it is inlined so the bundled notebook does not fetch its
+      dependencies from CDNs. https://github.com/observablehq/runtime#runtime
+    -->
+    <script>@@{stdlib}</script>
+    <script>@@{d3}</script>
+
+
+
+
 
 
     <script>
@@ -59,44 +64,36 @@
         <div id="observablehq-beta_header"></div>
         <div id="observablehq-blurb"></div>
         <div id="observablehq-checkboxes"></div>
-{% if show_splink_predictions_in_interface %}
-        <div id="observablehq-show_splink_predictions_in_interface"></div>
-{% endif %}
+@@{prediction_control}
         <div id="observablehq-existing_labels_csv"></div>
         <div id="observablehq-table-interface"></div>
         <div id="observablehq-dl"></div>
 
 
-{% if view_in_jupyter %}
-        <div id="observablehq-labels_in_textarea"></div>
-{% endif %}
+@@{labels_textarea}
 
 
     </div>
 
 <script>
-{% if show_splink_predictions_in_interface %}
-        SHOW_SPLINK_PREDICTIONS = true
-{% else %}
-        SHOW_SPLINK_PREDICTIONS = false
-{% endif %}
+SHOW_SPLINK_PREDICTIONS = @@{show_predictions};
 </script>
 
 
-{% if pairwise_comparison_data %}
-    <script>
-        pairwise_comparison_data_from_splink = {{ pairwise_comparison_data }};
-    </script>
-{% endif %}
 
-{% if splink_settings_data %}
     <script>
-        splink_settings_from_splink = {{ splink_settings_data }};
+        pairwise_comparison_data_from_splink = @@{pairwise_comparison_data};
     </script>
-{% endif %}
+
+
+
+    <script>
+        splink_settings_from_splink = @@{splink_settings_data};
+    </script>
+
 
 <script>
-        {{slt}}
+        @@{slt}
     </script>
 
 <script type="module">
@@ -106,9 +103,7 @@
         if (name === "styles") return new slt.Inspector(document.querySelector("#observablehq-styles"));
         if (name === "viewof checkboxes") return new slt.Inspector(document.querySelector("#observablehq-checkboxes"));
 
-{% if show_splink_predictions_in_interface %}
-        if (name === "viewof show_splink_predictions_in_interface") return new slt.Inspector(document.querySelector("#observablehq-show_splink_predictions_in_interface"));
-{% endif %}
+@@{prediction_inspector}
         if (name === "viewof table_interface") return new slt.Inspector(document.querySelector("#observablehq-table-interface"));
         if (name === "viewof existing_labels_csv") return new slt.Inspector(document.querySelector("#observablehq-existing_labels_csv"));
         if (name === "dl") return new slt.Inspector(document.querySelector("#observablehq-dl"));
@@ -116,9 +111,7 @@
         if (name === "blurb") return new slt.Inspector(document.querySelector("#observablehq-blurb"));
         if (name === "beta_header") return new slt.Inspector(document.querySelector("#observablehq-beta_header"));
 
-{% if view_in_jupyter %}
-        if (name === "labels_in_textarea") return new slt.Inspector(document.querySelector("#observablehq-labels_in_textarea"));
-{% endif %}
+@@{labels_inspector}
 
 
 
@@ -129,4 +122,3 @@
 </body>
 
 </html>
-
