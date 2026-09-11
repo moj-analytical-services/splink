@@ -627,20 +627,24 @@ bar | text
 #
 # ### Chart definition
 #
-# In [`splink/charts.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/charts.py) we can add a new function to populate the chart definition with the provided data:
+# In [`splink/internals/charts.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/internals/charts.py), define a small `SplinkChart` subclass for the template:
 #
 # ```python
-# def my_new_chart(records, as_dict=False):
-#     chart_path = "my_new_chart.json"
-#     chart = load_chart_definition(chart_path)
+# from splink.internals.charts import SplinkChart
 #
-#     chart["data"]["values"] = records
-#     return altair_or_json(chart, as_dict=as_dict)
+# class MyNewChart(SplinkChart[dict]):
+#     @property
+#     def chart_spec_file(self) -> str:
+#         return "my_new_chart.json"
+#
+#
+# def my_new_chart(records) -> MyNewChart:
+#     return MyNewChart(records)
 # ```
 #
-# >**Note** - only the data is being added to a fixed chart definition here. Other elements of the chart spec can be changed by editing the `chart` dictionary in the same way. 
+# >**Note** - `SplinkChart.chart_dict` adds the records to the template's `data.values`. Other elements of the chart spec can be changed by overriding `alter_spec_directly()` or `alter_spec_from_data()`.
 # >
-# > For example, if you wanted to add a `color_scheme` argument to replace the default scheme ("tableau10"), this function could include the line: `chart["layer"][0]["encoding"]["color"]["scale"]["scheme"] = color_scheme`
+# > For example, a `color_scheme` argument can be applied in `alter_spec_directly()` by updating `chart_spec["layer"][0]["encoding"]["color"]["scale"]["scheme"]`.
 #
 # ### Chart method
 #
