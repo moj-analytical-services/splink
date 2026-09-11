@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- `igraph` is now an optional extra (`pip install 'splink[graphs]'`) rather than a required dependency; it is only used by the `is_bridge` edge metric, which degrades gracefully when it is not installed
+
 ### Fixed
 
 - Updated `.jar` (0.2.1) with newer dependency versions [#3098](https://github.com/moj-analytical-services/splink/pull/3098)
