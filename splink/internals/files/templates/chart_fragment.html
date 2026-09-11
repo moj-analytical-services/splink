@@ -44,16 +44,18 @@
     return Promise.resolve().then(() => embed(outputDiv, spec, embedOpt)).catch(showError);
   }
   if (typeof define === 'function' && define.amd) {
-    requirejs.config({
-      paths,
-      onNodeCreated: function(node, config, moduleName) {
-        if (integrities[moduleName]) {
-          node.integrity = integrities[moduleName];
-          node.crossOrigin = 'anonymous';
+    const splinkRequire = window.__splinkChartRequire ||
+      (window.__splinkChartRequire = requirejs.config({
+        context: 'splink-chart',
+        paths,
+        onNodeCreated: function(node, config, moduleName) {
+          if (integrities[moduleName]) {
+            node.integrity = integrities[moduleName];
+            node.crossOrigin = 'anonymous';
+          }
         }
-      }
-    });
-    require(['vega-embed'], displayChart, showError);
+      }));
+    splinkRequire(['vega-embed'], displayChart, showError);
   } else {
     maybeLoadScript('vega')
       .then(() => maybeLoadScript('vega-lite'))
