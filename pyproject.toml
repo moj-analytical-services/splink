@@ -119,6 +119,10 @@ build-backend = "hatchling.build"
 only-include = ["splink"]
 ignore-vcs = true
 
+[tool.hatch.build.targets.wheel]
+packages = ["splink"]
+artifacts = ["splink/internals/files/chart_defs/*.json"]
+
 [tool.isort]
 profile = "black"
 
