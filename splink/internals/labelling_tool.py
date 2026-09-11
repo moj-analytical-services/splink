@@ -16,6 +16,38 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_PREDICTION_CONTROL = (
+    '<div id="observablehq-show_splink_predictions_in_interface"></div>'
+)
+_LABELS_TEXTAREA = '<div id="observablehq-labels_in_textarea"></div>'
+_PREDICTION_INSPECTOR = (
+    'if (name === "viewof show_splink_predictions_in_interface") '
+    "return new slt.Inspector(document.querySelector("
+    '"#observablehq-show_splink_predictions_in_interface"));'
+)
+_LABELS_INSPECTOR = (
+    'if (name === "labels_in_textarea") '
+    "return new slt.Inspector(document.querySelector("
+    '"#observablehq-labels_in_textarea"));'
+)
+
+
+def _labelling_template_fragments(
+    view_in_jupyter: bool,
+    show_splink_predictions_in_interface: bool,
+) -> dict[str, str]:
+    """Return the paired DOM and Observable fragments for optional controls."""
+    return {
+        "prediction_control": (
+            _PREDICTION_CONTROL if show_splink_predictions_in_interface else ""
+        ),
+        "labels_textarea": _LABELS_TEXTAREA if view_in_jupyter else "",
+        "prediction_inspector": (
+            _PREDICTION_INSPECTOR if show_splink_predictions_in_interface else ""
+        ),
+        "labels_inspector": _LABELS_INSPECTOR if view_in_jupyter else "",
+    }
+
 
 def generate_labelling_tool_comparisons(
     linker: "Linker",
@@ -113,25 +145,12 @@ def render_labelling_tool_html(
         ),
         "splink_settings_data": json_for_html(settings, cls=EverythingEncoder),
         "show_predictions": json_for_html(show_splink_predictions_in_interface),
-        "prediction_control": "<div "
-        'id="observablehq-show_splink_predictions_in_interface"></div>'
-        if show_splink_predictions_in_interface
-        else "",
-        "labels_textarea": '<div id="observablehq-labels_in_textarea"></div>'
-        if view_in_jupyter
-        else "",
-        "prediction_inspector": "if (name === "
-        '"viewof show_splink_predictions_in_interface") '
-        "return new slt.Inspector(document.querySelector("
-        '"#observablehq-show_splink_predictions_in_interface"));'
-        if show_splink_predictions_in_interface
-        else "",
-        "labels_inspector": 'if (name === "labels_in_textarea") '
-        "return new slt.Inspector(document.querySelector("
-        '"#observablehq-labels_in_textarea"));'
-        if view_in_jupyter
-        else "",
     }
+    template_data.update(
+        _labelling_template_fragments(
+            view_in_jupyter, show_splink_predictions_in_interface
+        )
+    )
 
     rendered = render_html_template(template_path, template_data)
 
