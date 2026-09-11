@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import json
 import os
 from typing import TYPE_CHECKING, Any
 
 from splink.internals.duckdb.database_api import DuckDBAPI
+from splink.internals.html_utils import json_for_html, render_html_template
 from splink.internals.misc import EverythingEncoder, read_resource
 
 from .predict import _combine_prior_and_mws
@@ -193,21 +193,18 @@ def render_splink_comparison_viewer_html(
     out_path: str,
     overwrite: bool = False,
 ) -> str:
-    from jinja2 import Template
 
     # When developing the package, it can be easier to point
     # ar the script live on observable using <script src=>
     # rather than bundling the whole thing into the html
-    bundle_observable_notebook = True
 
-    template_path = "internals/files/splink_comparison_viewer/template.j2"
-    template = Template(read_resource(template_path))
+    template_path = "internals/files/splink_comparison_viewer/template.html"
 
     template_data: dict[str, Any] = {
-        "comparison_vector_data": json.dumps(
+        "comparison_vector_data": json_for_html(
             comparison_vector_data, cls=EverythingEncoder
         ),
-        "splink_settings": json.dumps(splink_settings),
+        "splink_settings": json_for_html(splink_settings),
     }
 
     files = {
@@ -221,9 +218,7 @@ def render_splink_comparison_viewer_html(
     for k, v in files.items():
         template_data[k] = read_resource(v)
 
-    template_data["bundle_observable_notebook"] = bundle_observable_notebook
-
-    rendered = template.render(**template_data)
+    rendered = render_html_template(template_path, template_data)
 
     if os.path.isfile(out_path) and not overwrite:
         raise ValueError(

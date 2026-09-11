@@ -13,28 +13,22 @@ from typing import (
     Protocol,
     Sequence,
     TypeVar,
-    Union,
     cast,
 )
 
+from splink.internals.html_utils import chart_html, load_chart_libraries
 from splink.internals.misc import read_resource
 
 if TYPE_CHECKING:
-    from altair import SchemaBase
-
     from splink.internals.comparison_level import ComparisonLevelDetailedRecord
     from splink.internals.em_training_session import (
         ModelParameterIterationDetailedRecord,
     )
     from splink.internals.settings import ModelParameterDetailedRecord
 else:
-    SchemaBase = None
-
     ComparisonLevelDetailedRecord = None
     ModelParameterDetailedRecord = None
     ModelParameterIterationDetailedRecord = None
-# type alias:
-ChartReturnType = Union[dict[Any, Any], SchemaBase]
 
 
 def load_chart_definition(filename):
@@ -43,23 +37,7 @@ def load_chart_definition(filename):
 
 
 def _load_external_libs():
-    to_load = {
-        "vega-embed": "internals/files/external_js/vega-embed@6.20.2",
-        "vega-lite": "internals/files/external_js/vega-lite@5.2.0",
-        "vega": "internals/files/external_js/vega@5.31.0",
-    }
-    return {k: read_resource(v) for k, v in to_load.items()}
-
-
-def altair_or_json(
-    chart_dict: dict[Any, Any], as_dict: bool = False
-) -> ChartReturnType:
-    from altair import Chart
-
-    if not as_dict:
-        return Chart.from_dict(chart_dict)
-
-    return chart_dict
+    return load_chart_libraries()
 
 
 class AsDictable(Protocol):
@@ -121,7 +99,16 @@ class SplinkChart(ABC, Generic[T]):
 
     @property
     def altair_chart(self):
-        from altair import Chart
+        try:
+            from altair import Chart
+        except ModuleNotFoundError as exc:
+            if exc.name != "altair":
+                raise
+            raise ModuleNotFoundError(
+                "`altair_chart` requires the optional Altair dependency. "
+                "Notebook display and basic HTML export do not require Altair.",
+                name="altair",
+            ) from exc
 
         return Chart.from_dict(self.chart_dict)
 
@@ -152,8 +139,27 @@ class SplinkChart(ABC, Generic[T]):
         self.height = height
         # TODO: return self?
 
+    def to_html(self, *, inline: bool = False) -> str:
+        """Return a complete HTML document, with CDN or bundled (inline) libraries."""
+        return chart_html(self.chart_dict, inline=inline, fullhtml=True)
+
     def save(self, *args, **kwargs):
-        self.altair_chart.save(*args, **kwargs)
+        """Save basic HTML natively; delegate advanced requests to optional Altair."""
+        target = args[0] if args else kwargs.get("fp")
+        basic = len(args) <= 1 and not (args and "fp" in kwargs)
+        basic = basic and not (kwargs.keys() - {"fp", "format", "inline"})
+        fmt = kwargs.get("format")
+        if fmt is None and isinstance(target, (str, os.PathLike)):
+            fmt = os.path.splitext(os.fspath(target))[1][1:].lower()
+        if basic and fmt in ("html", "htm") and target is not None:
+            content = self.to_html(inline=kwargs.get("inline", False))
+            if hasattr(target, "write"):
+                target.write(content)
+            else:
+                with open(target, "w", encoding="utf-8") as stream:
+                    stream.write(content)
+            return
+        return self.altair_chart.save(*args, **kwargs)
 
     def save_offline_chart(
         self,
@@ -185,23 +191,26 @@ class SplinkChart(ABC, Generic[T]):
                 f"or set overwrite=True to overwrite."
             )
 
-        template = read_resource("internals/files/templates/single_chart_template.html")
-
-        fmt_dict = _load_external_libs()
-
-        fmt_dict["mychart"] = json.dumps(self.chart_dict)
-
         with open(filename, "w", encoding="utf-8") as f:
-            f.write(template.format(**fmt_dict))
+            f.write(self.to_html(inline=True))
 
         if print_msg:
             print(f"Chart saved to {filename}")  # noqa: T201
             print(iframe_message.format(filename=filename))  # noqa: T201
 
-    # allows rich representation of altair chart in IPython environments: https://ipython.readthedocs.io/en/stable/config/integrating.html
-    def _repr_mimebundle_(self, *args, **kwargs):
-        # let altair handle the display for us
-        return self.altair_chart._repr_mimebundle_(*args, **kwargs)
+    def _repr_mimebundle_(self, include=None, exclude=None):
+        requested = {"text/html", "text/plain"}
+        if include is not None:
+            requested.intersection_update(include)
+        requested.difference_update(exclude or ())
+        result = {}
+        if "text/plain" in requested:
+            result["text/plain"] = (
+                "SplinkChart (use .to_html() or .save() to export HTML)"
+            )
+        if "text/html" in requested:
+            result["text/html"] = chart_html(self.chart_dict)
+        return result
 
 
 class MatchWeightsChart(SplinkChart[ComparisonLevelDetailedRecord]):
