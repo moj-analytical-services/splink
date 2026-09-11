@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import json
 import logging
 import os
 from typing import TYPE_CHECKING, Any
 
+from splink.internals.html_utils import json_for_html, render_html_template
 from splink.internals.misc import EverythingEncoder, read_resource
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -80,7 +80,6 @@ def render_labelling_tool_html(
 ) -> str:
     import numpy as np
     import pandas as pd
-    from jinja2 import Template
 
     settings: dict[str, Any] = linker._settings_obj.as_dict()
 
@@ -103,20 +102,38 @@ def render_labelling_tool_html(
 
     comparisons_recs = comparisons_recs.to_dict(orient="records")
     # Render template with cluster, nodes and edges
-    template_path = "internals/files/labelling_tool/template.j2"
-    template = Template(read_resource(template_path))
+    template_path = "internals/files/labelling_tool/template.html"
 
     template_data = {
         "slt": read_resource("internals/files/labelling_tool/slt.js"),
         "d3": read_resource("internals/files/external_js/d3@7.8.5"),
         "stdlib": read_resource("internals/files/external_js/stdlib.js@5.8.3"),
-        "pairwise_comparison_data": json.dumps(comparisons_recs, cls=EverythingEncoder),
-        "splink_settings_data": json.dumps(settings, cls=EverythingEncoder),
-        "view_in_jupyter": view_in_jupyter,
-        "show_splink_predictions_in_interface": show_splink_predictions_in_interface,
+        "pairwise_comparison_data": json_for_html(
+            comparisons_recs, cls=EverythingEncoder
+        ),
+        "splink_settings_data": json_for_html(settings, cls=EverythingEncoder),
+        "show_predictions": json_for_html(show_splink_predictions_in_interface),
+        "prediction_control": "<div "
+        'id="observablehq-show_splink_predictions_in_interface"></div>'
+        if show_splink_predictions_in_interface
+        else "",
+        "labels_textarea": '<div id="observablehq-labels_in_textarea"></div>'
+        if view_in_jupyter
+        else "",
+        "prediction_inspector": "if (name === "
+        '"viewof show_splink_predictions_in_interface") '
+        "return new slt.Inspector(document.querySelector("
+        '"#observablehq-show_splink_predictions_in_interface"));'
+        if show_splink_predictions_in_interface
+        else "",
+        "labels_inspector": 'if (name === "labels_in_textarea") '
+        "return new slt.Inspector(document.querySelector("
+        '"#observablehq-labels_in_textarea"));'
+        if view_in_jupyter
+        else "",
     }
 
-    rendered = template.render(**template_data)
+    rendered = render_html_template(template_path, template_data)
 
     if os.path.isfile(out_path) and not overwrite:
         raise ValueError(

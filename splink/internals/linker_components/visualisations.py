@@ -40,9 +40,15 @@ class LinkerVisualisations:
 
     Most of the visualisations return a `SplinkChart` object.
 
-    An altair chart ([altair.Chart](https://altair-viz.github.io/user_guide/generated/toplevel/altair.Chart.html))
-    object is available as splink_chart.chart, meaning it can be saved an manipulated
-    using Altair. SplinkChart wraps altair.Chart.save() for convenience
+    Display and basic HTML export work without Altair. Use `to_html(inline=True)`
+    or `save("chart.html", inline=True)` to include the packaged JavaScript runtime.
+    Notebook display needs browser access to the pinned CDN and trusted JavaScript
+    output. In Databricks, use `displayHTML(splink_chart.to_html(inline=True))`.
+
+    `splink_chart.altair_chart` provides explicit Altair conversion after installing
+    `pip install "splink[altair]"`. Altair themes and renderers apply only after this
+    conversion. Advanced save formats/options also require Altair; image export may
+    additionally require `vl-convert-python` as documented by Altair.
 
     For example:
 
@@ -50,7 +56,7 @@ class LinkerVisualisations:
     splink_chart = linker.visualisations.match_weights_chart()
 
     # Save to various formats
-    # forwards all arguments to `altair.Chart.save()`
+    # HTML saves natively; advanced formats delegate to Altair
     splink_chart.save("mychart.png")
     splink_chart.save("mychart.html")
     splink_chart.save("mychart.svg")

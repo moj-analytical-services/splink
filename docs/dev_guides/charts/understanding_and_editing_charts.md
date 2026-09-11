@@ -5,7 +5,9 @@ Interactive charts are a key tool when linking data with Splink. To see all of t
 
 ## How do charts work in Splink?
 
-Charts in Splink are built with [Altair](https://altair-viz.github.io/index.html).
+Splink charts contain Vega-Lite specifications. Basic chart display and HTML
+export do not require Altair; use `chart.altair_chart` after installing
+`splink[altair]` for Altair customisation and advanced export formats.
 
 For a given chart, there is usually:
 

@@ -437,7 +437,7 @@ class EMTrainingSession:
         random records match.
 
         Returns:
-            An interactive Altair chart.
+            An interactive SplinkChart (Altair is optional).
         """
         records = self._lambda_history_records
         return ProbabilityTwoRandomRecordsMatchIterationChart(records)
@@ -449,7 +449,7 @@ class EMTrainingSession:
         Display an interactive chart of the match weights history.
 
         Returns:
-            An interactive Altair chart.
+            An interactive SplinkChart (Altair is optional).
         """
         return MatchWeightsInteractiveHistoryChart(
             self._iteration_history_records,
@@ -463,7 +463,7 @@ class EMTrainingSession:
         Display an interactive chart of the m and u values.
 
         Returns:
-            An interactive Altair chart.
+            An interactive SplinkChart (Altair is optional).
         """
         return MUParametersInteractiveHistoryChart(self._iteration_history_records)
 

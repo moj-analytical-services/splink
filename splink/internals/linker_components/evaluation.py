@@ -148,7 +148,7 @@ class LinkerEvalution:
             ```
 
         Returns:
-            chart: An altair chart
+            chart: A SplinkChart (Altair is optional)
         """  # noqa: E501
 
         allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
