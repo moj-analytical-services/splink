@@ -1,7 +1,7 @@
 site_name: Splink
-site_url: https://moj-analytical-services.github.io/splink/
+site_url: https://robinl.github.io/splink/
 use_directory_urls: false
-repo_url: https://github.com/moj-analytical-services/splink
+repo_url: https://github.com/RobinL/splink
 edit_uri: edit/master/docs/
 theme:
   icon:
@@ -350,11 +350,11 @@ extra:
     property: G-L6JT8NK528
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/moj-analytical-services/splink
+      link: https://github.com/RobinL/splink
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/splink/
     - icon: fontawesome/solid/chevron-right
       link: https://www.robinlinacre.com/
     - icon: fontawesome/solid/rss
-      link: https://moj-analytical-services.github.io/splink/feed_rss_created.xml
+      link: https://robinl.github.io/splink/feed_rss_created.xml
   new: Recently added

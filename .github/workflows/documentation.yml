@@ -3,14 +3,13 @@ name: Documentation
 on:
   push:
     branches:
-      - 'splink4_maintenance'
       - 'master'
   pull_request:
     branches:
-      - 'splink4_maintenance'
       - 'master'
     paths:
       # files that affect the docs build:
+      - .github/workflows/documentation.yml
       - docs/**
       - CONTRIBUTING.md
       - mkdocs.yml
@@ -63,7 +62,7 @@ jobs:
           path: site
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/splink4_maintenance'
+    if: github.repository == 'RobinL/splink' && github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: build
     name: Deploy Documentation to GitHub Pages
     runs-on: ubuntu-latest
