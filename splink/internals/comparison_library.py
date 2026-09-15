@@ -785,9 +785,9 @@ class DateOfBirthComparison(ComparisonCreator):
             col_expr_as_string = self.col_expression.cast_to_string()
 
         levels.append(
-            cll.LevenshteinLevel(
-                col_expr_as_string, distance_threshold=1
-            ).configure(label_for_charts="Levenshtein distance <= 1")
+            cll.LevenshteinLevel(col_expr_as_string, distance_threshold=1).configure(
+                label_for_charts="Levenshtein distance <= 1"
+            )
         )
 
         if self.datetime_thresholds:
