@@ -7,7 +7,6 @@ from splink.internals.column_expression import ColumnExpression
 from splink.internals.comparison_creator import ComparisonCreator
 from splink.internals.comparison_level_creator import ComparisonLevelCreator
 from splink.internals.comparison_level_library import CustomLevel, DateMetricType
-from splink.internals.dialects import SplinkDialect
 from splink.internals.misc import ensure_is_iterable
 
 
