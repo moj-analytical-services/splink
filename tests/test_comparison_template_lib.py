@@ -72,7 +72,15 @@ def test_date_of_birth_comparison_levels(dialect, test_helpers):
                     "date_of_birth_l": "1990-05-01",
                     "date_of_birth_r": "1990-05-11",
                     "expected_value": 4,
-                    "expected_label": "DamerauLevenshtein distance <= 1",
+                    "expected_label": "Levenshtein distance <= 1",
+                },
+                {
+                    # Transposition has Levenshtein distance 2 (not 1),
+                    # so falls through to abs date difference <= 1 month
+                    "date_of_birth_l": "1990-05-12",
+                    "date_of_birth_r": "1990-05-21",
+                    "expected_value": 3,
+                    "expected_label": "Abs date difference <= 1 month",
                 },
                 {
                     "date_of_birth_l": "1990-05-20",

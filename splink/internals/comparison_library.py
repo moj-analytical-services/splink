@@ -690,25 +690,6 @@ class CustomComparison(ComparisonCreator):
         return comparison_creator
 
 
-class _DamerauLevenshteinIfSupportedElseLevenshteinLevel(ComparisonLevelCreator):
-    def __init__(self, col_name: Union[str, ColumnExpression], distance_threshold: int):
-        self.col_expression = ColumnExpression.instantiate_if_str(col_name)
-        self.distance_threshold = distance_threshold
-
-    def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        self.col_expression.sql_dialect = sql_dialect
-        col = self.col_expression
-        try:
-            lev_fn = sql_dialect.damerau_levenshtein_function_name
-        except NotImplementedError:
-            lev_fn = sql_dialect.levenshtein_function_name
-        return f"{lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
-
-    def create_label_for_charts(self) -> str:
-        col = self.col_expression
-        return f"Levenshtein distance of {col.label} <= {self.distance_threshold}"
-
-
 class DateOfBirthComparison(ComparisonCreator):
     def __init__(
         self,
@@ -734,7 +715,7 @@ class DateOfBirthComparison(ComparisonCreator):
         The default arguments will give a comparison with comparison levels:
 
         - Exact match (all other dates)
-        - Damerau-Levenshtein distance <= 1
+        - Levenshtein distance <= 1
         - Date difference <= 1 month
         - Date difference <= 1 year
         - Date difference <= 10 years
@@ -805,9 +786,9 @@ class DateOfBirthComparison(ComparisonCreator):
             col_expr_as_string = self.col_expression.cast_to_string()
 
         levels.append(
-            _DamerauLevenshteinIfSupportedElseLevenshteinLevel(
+            cll.LevenshteinLevel(
                 col_expr_as_string, distance_threshold=1
-            ).configure(label_for_charts="DamerauLevenshtein distance <= 1")
+            ).configure(label_for_charts="Levenshtein distance <= 1")
         )
 
         if self.datetime_thresholds:
