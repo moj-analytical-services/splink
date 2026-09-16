@@ -2892,7 +2892,6 @@ version = "5.0.0.dev4"
 source = { editable = "../../" }
 dependencies = [
     { name = "duckdb" },
-    { name = "igraph" },
     { name = "sqlglot" },
 ]
 
@@ -2900,7 +2899,7 @@ dependencies = [
 requires-dist = [
     { name = "altair", marker = "extra == 'altair'", specifier = ">=5.0.1" },
     { name = "duckdb", specifier = ">=0.9.2" },
-    { name = "igraph", specifier = ">=0.11.2" },
+    { name = "igraph", marker = "extra == 'igraph'", specifier = ">=0.11.2" },
     { name = "psycopg2-binary", marker = "extra == 'postgres'", specifier = ">=2.9.0" },
     { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=15.0.0" },
     { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.0" },
@@ -2909,7 +2908,7 @@ requires-dist = [
     { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=2.0.0" },
     { name = "sqlglot", specifier = ">=17.6.0" },
 ]
-provides-extras = ["altair", "pyspark", "spark", "sqlite", "postgres", "pyarrow"]
+provides-extras = ["altair", "igraph", "pyspark", "spark", "sqlite", "postgres", "pyarrow"]
 
 [package.metadata.requires-dev]
 core = [
@@ -2917,6 +2916,7 @@ core = [
     { name = "sqlglot" },
 ]
 dev = [
+    { name = "igraph", specifier = ">=0.11.2" },
     { name = "mypy", specifier = ">=2.1.0" },
     { name = "networkx", specifier = ">=2.5.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
@@ -2957,6 +2957,7 @@ spark-3 = [{ name = "pyspark", marker = "python_full_version < '3.12'", specifie
 spark-4 = [{ name = "pyspark", specifier = ">=4.0.0" }]
 sqlite = [{ name = "rapidfuzz", specifier = ">=3.10.0" }]
 testing = [
+    { name = "igraph", specifier = ">=0.11.2" },
     { name = "networkx", specifier = ">=2.5.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pyarrow", specifier = ">=15.0.0" },
@@ -2968,6 +2969,7 @@ testing = [
     { name = "sqlalchemy", specifier = ">=2.0.0" },
 ]
 testing-core = [
+    { name = "igraph", specifier = ">=0.11.2" },
     { name = "networkx", specifier = ">=2.5.1" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pyarrow", specifier = ">=15.0.0" },
@@ -2991,6 +2993,7 @@ dependencies = [
 [package.dev-dependencies]
 demos = [
     { name = "altair" },
+    { name = "igraph" },
     { name = "ipywidgets" },
     { name = "jupytext" },
     { name = "nbconvert" },
@@ -3005,6 +3008,7 @@ demos = [
 ]
 dev = [
     { name = "altair" },
+    { name = "igraph" },
     { name = "ipywidgets" },
     { name = "jupytext" },
     { name = "nbconvert" },
@@ -3032,6 +3036,7 @@ requires-dist = [{ name = "splink", editable = "../../" }]
 [package.metadata.requires-dev]
 demos = [
     { name = "altair", specifier = ">=5.0.1" },
+    { name = "igraph", specifier = ">=0.11.2" },
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "jupytext", specifier = ">=1.18.1" },
     { name = "nbconvert", specifier = ">=7.16.6" },
@@ -3043,6 +3048,7 @@ demos = [
 ]
 dev = [
     { name = "altair", specifier = ">=5.0.1" },
+    { name = "igraph", specifier = ">=0.11.2" },
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "jupytext", specifier = ">=1.18.1" },
     { name = "nbconvert", specifier = ">=7.16.6" },
