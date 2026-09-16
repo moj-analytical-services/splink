@@ -16,6 +16,7 @@ dev = [
 ]
 demos = [
     "altair>=5.0.1",
+    "igraph>=0.11.2",
     "ipywidgets>=8.1.7",
     "jupytext>=1.18.1",
     "nbconvert>=7.16.6",

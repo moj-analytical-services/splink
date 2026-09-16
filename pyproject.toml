@@ -16,11 +16,11 @@ license = "MIT"
 dependencies = [
     "duckdb>=0.9.2",
     "sqlglot>=17.6.0",
-    "igraph>=0.11.2",
 ]
 
 [project.optional-dependencies]
 altair = ["altair>=5.0.1"]
+igraph = ["igraph>=0.11.2"]
 pyspark = ["pyspark>=3.5.0"]
 spark = ["pyspark>=3.5.0"]
 # sqlite doesn't _require_ this functionality, but it's used if we want to use fuzzy levels
@@ -76,6 +76,7 @@ sqlite = [
     "rapidfuzz>=3.10.0",
 ]
 testing-core = [
+    "igraph>=0.11.2",
     "pytest>=7.3",
     "pyarrow>=15.0.0",
     "networkx>=2.5.1",
