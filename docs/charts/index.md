@@ -28,28 +28,6 @@
 ]
 ::/cards::
 
-## Comparison Helpers
-
-::cards::
-[
-    {
-    "title": "`comparator score chart`",
-    "image": "./img/comparator_score_chart.png",
-    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#comparing-string-similarity-and-distance-scores"
-    },
-    {
-    "title": "`comparator score threshold chart`",
-    "image": "./img/comparator_score_threshold_chart.png",
-    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#choosing-thresholds"
-    },
-    {
-    "title": "`phonetic match chart`",
-    "image": "./img/phonetic_match_chart.png",
-    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#phonetic-matching"
-    }
-]
-::/cards::
-
 ## Evaluation
 
 ### Model Evaluation
@@ -152,16 +130,6 @@
     "url": "./cluster_studio_dashboard.ipynb"
   },
   {
-    "title": "`comparator score chart`",
-    "image": "./img/comparator_score_chart.png",
-    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#comparing-string-similarity-and-distance-scores"
-  },
-  {
-    "title": "`comparator score threshold chart`",
-    "image": "./img/comparator_score_threshold_chart.png",
-    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#choosing-thresholds"
-  },
-  {
     "title": "`comparison viewer dashboard`",
     "image": "./img/comparison_viewer_dashboard.png",
     "url": "./comparison_viewer_dashboard.ipynb"
@@ -190,11 +158,6 @@
     "title": "`parameter estimate comparisons chart`",
     "image": "./img/parameter_estimate_comparisons_chart.png",
     "url": "./parameter_estimate_comparisons_chart.ipynb"
-  },
-  {
-    "title": "`phonetic match chart`",
-    "image": "./img/phonetic_match_chart.png",
-    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#phonetic-matching"
   },
   {
     "title": "`profile columns`",
