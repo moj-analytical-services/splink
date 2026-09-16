@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import json
 import os
 import random
 from typing import TYPE_CHECKING, Any, Literal, Optional
 
 from splink.internals.exceptions import SplinkException
+from splink.internals.html_utils import json_for_html, render_html_template
 from splink.internals.misc import EverythingEncoder, read_resource
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.splink_dataframe import SplinkDataFrame
@@ -356,9 +356,6 @@ def render_splink_cluster_studio_html(
     overwrite: bool = False,
     _df_cluster_metrics: SplinkDataFrame | None = None,
 ) -> str:
-    from jinja2 import Template
-
-    bundle_observable_notebook = True
 
     svu_options = {
         "cluster_colname": "cluster_id",
@@ -380,23 +377,23 @@ def render_splink_cluster_studio_html(
     edges_recs = df_edges_as_records(linker, df_predicted_edges, df_nodes)
 
     # Render template with cluster, nodes and edges
-    template_path = "internals/files/splink_cluster_studio/cluster_template.j2"
-    template = Template(read_resource(template_path))
+    template_path = "internals/files/splink_cluster_studio/cluster_template.html"
 
     template_data: dict[str, Any] = {
-        "raw_edge_data": json.dumps(edges_recs, cls=EverythingEncoder),
-        "raw_node_data": json.dumps(nodes_recs, cls=EverythingEncoder),
-        "raw_clusters_data": json.dumps(cluster_recs, cls=EverythingEncoder),
-        "splink_settings": json.dumps(
+        "raw_edge_data": json_for_html(edges_recs, cls=EverythingEncoder),
+        "raw_node_data": json_for_html(nodes_recs, cls=EverythingEncoder),
+        "raw_clusters_data": json_for_html(cluster_recs, cls=EverythingEncoder),
+        "splink_settings": json_for_html(
             linker._settings_obj._as_completed_dict(), cls=EverythingEncoder
         ),
-        "svu_options": json.dumps(svu_options, cls=EverythingEncoder),
+        "svu_options": json_for_html(svu_options, cls=EverythingEncoder),
     }
 
+    template_data["named_clusters"] = "null"
     if cluster_names:
         named_clusters_dict = dict(zip(cluster_ids, cluster_names))
 
-        template_data["named_clusters"] = json.dumps(
+        template_data["named_clusters"] = json_for_html(
             named_clusters_dict, cls=EverythingEncoder
         )
 
@@ -411,9 +408,7 @@ def render_splink_cluster_studio_html(
     for k, v in files.items():
         template_data[k] = read_resource(v)
 
-    template_data["bundle_observable_notebook"] = bundle_observable_notebook
-
-    rendered = template.render(**template_data)
+    rendered = render_html_template(template_path, template_data)
 
     if os.path.isfile(out_path) and not overwrite:
         raise ValueError(

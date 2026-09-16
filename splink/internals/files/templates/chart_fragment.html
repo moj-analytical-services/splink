@@ -1,0 +1,67 @@
+<!-- Adapted from Altair v5.5.0 altair/utils/html.py::HTML_TEMPLATE_UNIVERSAL. -->
+<style>
+  #@@{output_div}.vega-embed { width: 100%; display: flex; }
+  #@@{output_div}.vega-embed details,
+  #@@{output_div}.vega-embed details summary { position: relative; }
+</style>
+<div id="@@{output_div}"></div>
+<script type="text/javascript">
+(function(spec, embedOpt) {
+  const script = document.currentScript;
+  let outputDiv = script && script.previousElementSibling;
+  if (!outputDiv || outputDiv.id !== "@@{output_div}") {
+    outputDiv = document.getElementById("@@{output_div}");
+  }
+  const paths = @@{paths};
+  const integrities = @@{integrities};
+  // Share pending loads as well as completed loads across concurrent outputs.
+  const loads = window.__splinkChartLoads || (window.__splinkChartLoads = {});
+  function maybeLoadScript(lib) {
+    const url = paths[lib];
+    if (!loads[url]) {
+      loads[url] = new Promise(function(resolve, reject) {
+        const s = document.createElement('script');
+        s.async = true;
+        s.integrity = integrities[lib];
+        s.crossOrigin = 'anonymous';
+        s.onload = resolve;
+        s.onerror = () => {
+          delete loads[url];
+          reject(new Error(`Error loading script: ${url}`));
+        };
+        s.src = url;
+        document.head.appendChild(s);
+      });
+    }
+    return loads[url];
+  }
+  function showError(err) {
+    outputDiv.textContent = `Javascript Error: ${err.message || err}`;
+    outputDiv.style.color = 'red';
+    console.error(err);
+  }
+  function displayChart(embed) {
+    return Promise.resolve().then(() => embed(outputDiv, spec, embedOpt)).catch(showError);
+  }
+  if (typeof define === 'function' && define.amd) {
+    const splinkRequire = window.__splinkChartRequire ||
+      (window.__splinkChartRequire = requirejs.config({
+        context: 'splink-chart',
+        paths,
+        onNodeCreated: function(node, config, moduleName) {
+          if (integrities[moduleName]) {
+            node.integrity = integrities[moduleName];
+            node.crossOrigin = 'anonymous';
+          }
+        }
+      }));
+    splinkRequire(['vega-embed'], displayChart, showError);
+  } else {
+    maybeLoadScript('vega')
+      .then(() => maybeLoadScript('vega-lite'))
+      .then(() => maybeLoadScript('vega-embed'))
+      .then(() => displayChart(window.vegaEmbed))
+      .catch(showError);
+  }
+})(@@{spec}, {});
+</script>

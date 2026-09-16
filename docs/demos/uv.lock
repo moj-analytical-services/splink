@@ -2891,19 +2891,16 @@ name = "splink"
 version = "5.0.0.dev4"
 source = { editable = "../../" }
 dependencies = [
-    { name = "altair" },
     { name = "duckdb" },
     { name = "igraph" },
-    { name = "jinja2" },
     { name = "sqlglot" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "altair", specifier = ">=5.0.1" },
+    { name = "altair", marker = "extra == 'altair'", specifier = ">=5.0.1" },
     { name = "duckdb", specifier = ">=0.9.2" },
     { name = "igraph", specifier = ">=0.11.2" },
-    { name = "jinja2", specifier = ">=3.0.3" },
     { name = "psycopg2-binary", marker = "extra == 'postgres'", specifier = ">=2.9.0" },
     { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=15.0.0" },
     { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.0" },
@@ -2912,7 +2909,7 @@ requires-dist = [
     { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=2.0.0" },
     { name = "sqlglot", specifier = ">=17.6.0" },
 ]
-provides-extras = ["pyspark", "spark", "sqlite", "postgres", "pyarrow"]
+provides-extras = ["altair", "pyspark", "spark", "sqlite", "postgres", "pyarrow"]
 
 [package.metadata.requires-dev]
 core = [
@@ -2932,6 +2929,7 @@ dev = [
     { name = "sqlalchemy", specifier = ">=2.0.0" },
 ]
 docs = [
+    { name = "altair", marker = "python_full_version >= '3.13'", specifier = ">=5.0.1" },
     { name = "griffe", marker = "python_full_version >= '3.13'", specifier = ">=1.4.0" },
     { name = "jinja2", marker = "python_full_version >= '3.13'", specifier = ">=3.1.6" },
     { name = "mkdocs", marker = "python_full_version >= '3.13'", specifier = ">=1.6.1" },
@@ -2992,6 +2990,7 @@ dependencies = [
 
 [package.dev-dependencies]
 demos = [
+    { name = "altair" },
     { name = "ipywidgets" },
     { name = "jupytext" },
     { name = "nbconvert" },
@@ -3005,6 +3004,7 @@ demos = [
     { name = "pytest-xdist" },
 ]
 dev = [
+    { name = "altair" },
     { name = "ipywidgets" },
     { name = "jupytext" },
     { name = "nbconvert" },
@@ -3031,6 +3031,7 @@ requires-dist = [{ name = "splink", editable = "../../" }]
 
 [package.metadata.requires-dev]
 demos = [
+    { name = "altair", specifier = ">=5.0.1" },
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "jupytext", specifier = ">=1.18.1" },
     { name = "nbconvert", specifier = ">=7.16.6" },
@@ -3041,6 +3042,7 @@ demos = [
     { name = "pytest-xdist", specifier = ">=3.6.1" },
 ]
 dev = [
+    { name = "altair", specifier = ">=5.0.1" },
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "jupytext", specifier = ">=1.18.1" },
     { name = "nbconvert", specifier = ">=7.16.6" },

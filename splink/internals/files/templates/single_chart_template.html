@@ -1,31 +1,15 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-<meta charset="utf-8"/>
-  <script>{vega}</script>
-  <script>{vega-lite}</script>
-  <script>{vega-embed}</script>
-  <style>
-    .chart-wrapper  {{
-        height: auto !important
-      }}
-  </style>
-</head>
-
-<body>
-
-
-    <div id="mychart"></div>
-
-
-
-
-  <script type="text/javascript">
-
-    vegaEmbed('#mychart', {mychart}).catch(console.error);
-
-  </script>
-</body>
-
-</html>
+<style>
+  #@@{output_div}.vega-embed { width: 100%; display: flex; }
+</style>
+<script>@@{vega}</script>
+<script>@@{vega_lite}</script>
+<script>@@{vega_embed}</script>
+<div id="@@{output_div}"></div>
+<script>
+vegaEmbed(document.getElementById('@@{output_div}'), @@{spec}, {}).catch(function(err) {
+  const output = document.getElementById('@@{output_div}');
+  output.textContent = `Javascript Error: ${err.message || err}`;
+  output.style.color = 'red';
+  console.error(err);
+});
+</script>
