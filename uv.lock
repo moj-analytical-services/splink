@@ -3069,7 +3069,7 @@ wheels = [
 
 [[package]]
 name = "splink"
-version = "5.0.0.dev4"
+version = "5.0.0.dev5"
 source = { editable = "." }
 dependencies = [
     { name = "duckdb" },
