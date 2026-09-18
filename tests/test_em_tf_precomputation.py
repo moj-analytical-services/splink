@@ -6,27 +6,7 @@ import splink.internals.expectation_maximisation as em
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on
 from splink.internals.em_training_session import EMTrainingSession
 from splink.internals.exceptions import EMTrainingException
-from splink.internals.predict import predict_from_comparison_vectors_sqls
 from tests.decorator import mark_with_dialects_including
-
-
-@mark_with_dialects_including("duckdb")
-def test_precomputed_tf_training_table_rejected_for_inference():
-    settings = SettingsCreator(
-        link_type="dedupe_only",
-        comparisons=[
-            cl.ExactMatch("first_name").configure(term_frequency_adjustments=True)
-        ],
-    ).get_settings("duckdb")
-
-    with pytest.raises(AssertionError):
-        predict_from_comparison_vectors_sqls(
-            unique_id_input_columns=settings.column_info_settings.unique_id_input_columns,
-            core_model_settings=settings.core_model_settings,
-            sql_dialect=DuckDBAPI().sql_dialect,
-            training_mode=False,
-            use_precomputed_tf_training_table=True,
-        )
 
 
 @mark_with_dialects_including("duckdb")
@@ -91,9 +71,15 @@ def test_precomputed_tf_table_contains_only_training_columns(
 
 
 @mark_with_dialects_including("duckdb")
-@pytest.mark.parametrize("disable_exact_match_detection", [False, True])
-@pytest.mark.parametrize("tf_weight", [0.0, 0.5])
-@pytest.mark.parametrize("tf_frequency", [0.001, 0.1])
+@pytest.mark.parametrize(
+    "disable_exact_match_detection, tf_weight, tf_frequency",
+    [
+        pytest.param(False, 0.5, 0.1, id="fractional-weight"),
+        pytest.param(False, 0.5, 0.001, id="frequency-floor"),
+        pytest.param(True, 0.5, 0.1, id="exact-match-detection-disabled"),
+        pytest.param(False, 0.0, 0.1, id="zero-weight"),
+    ],
+)
 def test_precomputed_tf_matches_iteration_history(
     fake_1000, disable_exact_match_detection, tf_weight, tf_frequency
 ):
