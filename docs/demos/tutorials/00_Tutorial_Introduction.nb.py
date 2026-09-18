@@ -23,33 +23,33 @@
 #
 # - [1. Data prep pre-requisites](./01_Prerequisites.ipynb)
 #
-# - [2. Exploratory analysis](./02_Exploratory_analysis.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/02_Exploratory_analysis.ipynb">
+# - [2. Exploratory analysis](./02_Exploratory_analysis.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/ipynbs/docs/demos/tutorials/02_Exploratory_analysis.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 #
-# - [3. Choosing blocking rules to optimise runtimes](./03_Blocking.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/03_Blocking.ipynb">
+# - [3. Choosing blocking rules to optimise runtimes](./03_Blocking.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/ipynbs/docs/demos/tutorials/03_Blocking.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 #
-# - [4. Estimating model parameters](./04_Estimating_model_parameters.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/04_Estimating_model_parameters.ipynb">
+# - [4. Estimating model parameters](./04_Estimating_model_parameters.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/ipynbs/docs/demos/tutorials/04_Estimating_model_parameters.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 #
-# - [5. Predicting results](./05_Predicting_results.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/05_Predicting_results.ipynb">
+# - [5. Predicting results](./05_Predicting_results.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/ipynbs/docs/demos/tutorials/05_Predicting_results.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 #
-# - [6. Visualising predictions](./06_Visualising_predictions.ipynb) <a> <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/06_Visualising_predictions.ipynb">
+# - [6. Visualising predictions](./06_Visualising_predictions.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/ipynbs/docs/demos/tutorials/06_Visualising_predictions.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 #
-# - [7. Evaluation](./07_Evaluation.ipynb) <a> <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/07_Evaluation.ipynb">
+# - [7. Evaluation](./07_Evaluation.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/ipynbs/docs/demos/tutorials/07_Evaluation.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 #
 # - [8. Building your own model](./08_building_your_own_model.md)
 #
-# - [9. Scaling up to large datasets](./09_scaling_up_techniques.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/09_scaling_up_techniques.ipynb">
+# - [9. Scaling up to large datasets](./09_scaling_up_techniques.ipynb) <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/ipynbs/docs/demos/tutorials/09_scaling_up_techniques.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 #

@@ -26,7 +26,7 @@
 
 # %% tags=["hide_input"]
 # Uncomment and run this cell if you're running in Google Colab.
-# # !pip install splink
+# # !pip install "splink[altair,igraph,pyarrow]"
 
 # %% tags=["hide_input", "hide_output"]
 import logging

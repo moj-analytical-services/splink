@@ -34,6 +34,10 @@
 #
 # The synthetic data should also match the structure and format of the production data used to train the model.
 
+# %% tags=["hide_input"]
+# Uncomment and run this cell if you're running in Google Colab.
+# # !pip install "splink[altair,igraph,pyarrow]"
+
 # %%
 import duckdb
 import pyarrow as pa
@@ -86,8 +90,19 @@ production_df = splink_datasets.historical_50k
 # %%
 db_api = DuckDBAPI()
 production_df_sdf = db_api.register(production_df)
-# TODO: Update path to model settings json file as needed
-linker = Linker(production_df_sdf, settings='demo_settings/model_h50k.json')
+import json
+import urllib.request
+from pathlib import Path
+
+model_path = Path("demo_settings/model_h50k.json")
+if model_path.exists():
+    settings = json.loads(model_path.read_text())
+else:
+    url = "https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/demos/demo_settings/model_h50k.json"
+    with urllib.request.urlopen(url) as response:
+        settings = json.load(response)
+
+linker = Linker(production_df_sdf, settings=settings)
 
 # %% [markdown]
 # It's useful to visualise the model parameters to learn the relative importance of different parts of your data for linking.

@@ -71,7 +71,7 @@ from splink.exploratory import completeness_chart
 
 db_api = DuckDBAPI()
 
-df = splink_datasets.fake_1000
+df = splink_datasets.fake_1000.to_pandas()
 
 # Split a simple dataset into two, separate datasets which can be linked together.
 df_l = df.sample(frac=0.5)
