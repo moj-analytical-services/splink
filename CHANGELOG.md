@@ -11,37 +11,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated `.jar` (0.2.1) with newer dependency versions [#3098](https://github.com/moj-analytical-services/splink/pull/3098)
 
-### Removed
-
-- Dropped support for python 3.9 [#3053](https://github.com/moj-analytical-services/splink/pull/3053)
-
 ## [5.0.0]
+
+Major release - see our [blog](docs/blog/posts/2026-06-17-splink-5-release.md). Significant changes as follows. See also [comprehensive note of changes](https://gist.github.com/RobinL/c6d56a27d8f83c40b6b09643c0fa5d14).
 
 ### Added
 
-- `estimate_u_using_random_sampling()` now estimates u probabilities using chunking and can stop early once each comparison level has enough u observations (controlled by `min_count_per_level`). This makes u estimation a lot faster and less memory intensive
-- Support for chunking to allow processing of very large datasets in blocking and prediction [#2850](https://github.com/moj-analytical-services/splink/pull/2850)
-- New `table_management` functions to explicitly manage table caching [#2848](https://github.com/moj-analytical-services/splink/pull/2848)
-- Allow profiling of the SQL executed in Duckdb and Spark  pipelines by @RobinL in https://github.com/moj-analytical-services/splink/pull/3021
-- Performance fixes with `linker.training.estimate_probability_two_random_records_match` and `linker.training.estimate_u_using_random_sampling`
+- **Larger prediction jobs:** chunked prediction with progress updates and runtime estimates, individual chunks that can be processed across machines, and optional direct Parquet materialisation in DuckDB to reduce memory pressure.
+- **Incremental linkage and pairwise scoring:** experimental `predict_within()` and `predict_between()` methods score new or selected datasets, while `score_pair()` and `score_pairs()` score individual pairs or all pairs between two collections.
+- **SQL pipeline profiling:** detailed per-query profiles for DuckDB and Spark help identify expensive stages of a linkage job.
 
 ### Changed
 
-- Internal probabilistic calculations now use Match Weights (log-odds) instead of Bayes Factors to improve numerical stability [#2851](https://github.com/moj-analytical-services/splink/pull/2851)
-- `linker.misc.query_sql()` now outputs `SplinkDataFrame` as default, rather than a `pandas.DataFrame` [#2970](https://github.com/moj-analytical-services/splink/pull/2970)
-- Record sampling for `estimate_u_using_random_sampling()` (and Cluster Studio cluster selection) is now deterministic on every backend. Splink selects records using a hash of the unique id rather than backend-native random sampling, so results are reproducible across runs and a given `seed` is now also honoured on SQLite and Postgres [#3122](https://github.com/moj-analytical-services/splink/pull/3122)
-
-### Deprecated
-
-- `bayes_factor_column_prefix` setting is deprecated in favour of `match_weight_column_prefix` [#2851](https://github.com/moj-analytical-services/splink/pull/2851)
+- **Faster training and blocking analysis:** u estimation uses chunks and can stop once comparison levels have enough observations; EM training supports a `max_pairs` cap; prior estimation and blocking analysis support record sampling. Blocking counts are sampled by default, with exact counts still available.
+- **Explicit input registration:** register inputs with `db_api.register()` before passing them to `Linker`; the constructor no longer takes `db_api=`. `query_sql()` returns a `SplinkDataFrame` by default, and `as_record_dict()` is renamed to `as_record_list()`.
+- **Smaller installation:** only DuckDB and SQLGlot are required at runtime. Pandas, NumPy, Altair, and igraph are optional; install `splink[igraph]` when the `is_bridge` edge metric is needed.
+- **Charts without Altair:** charts and column profiles use `SplinkChart`, with native notebook display and HTML export, including offline HTML. Install `splink[altair]` for Altair customisation and advanced exports; Jinja2 is no longer required for chart or dashboard rendering.
+- **More stable scoring:** probabilistic calculations use match weights (log-odds), with output prefixes changing from `bf_` to `mw_`. `bayes_factor_column_prefix` is deprecated in favour of `match_weight_column_prefix`.
+- **Date-of-birth comparisons:** `DateOfBirthComparison` uses standard Levenshtein distance on all supported backends. Transposed digits may fall into a different comparison level when rebuilding a model from the template.
 
 ### Removed
 
-- Dropped support for Amazon Athena [#2858](https://github.com/moj-analytical-services/splink/pull/2858)
-- Removed implicit caching mechanism and the `use_cache` parameter from database execution methods [#2847](https://github.com/moj-analytical-services/splink/pull/2847)
-- Removed `materialise_blocked_pairs` argument from `predict` (blocked pairs are now always materialised) [#2848](https://github.com/moj-analytical-services/splink/pull/2848)
-- Removed salting mechanism as it is no longer required for parallelisation in DuckDB [#2849](https://github.com/moj-analytical-services/splink/pull/2849)
-- `pandas` and `numpy` are no longer required dependencies [#2883](https://github.com/moj-analytical-services/splink/pull/2883)
+- Python 3.9 and Amazon Athena support. Splink 5 requires Python 3.10 or later.
+- Legacy inference methods `compare_two_records()` and `find_matches_to_new_records()`, implicit caching and `use_cache`, salting, the `materialise_blocked_pairs` argument, and the exploratory similarity-analysis helpers. See the comprehensive note for replacements and migration details.
 
 ## [4.0.16] - 2026-03-11
 
