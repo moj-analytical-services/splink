@@ -12,54 +12,47 @@ It is assumed readers have already read the more general [guide to linking big d
 
 ## Summary:
 
-- From `splink==3.9.11` onwards, DuckDB generally parallelises jobs well, so you should see 100% usage of all CPU cores for the main Splink operations (parameter estimation and prediction)
-- If you are facing memory issues with DuckDB, you have the option of using an on-disk database, or of chunking `predict()` so that only part of the result is computed at a time.
-- In some cloud environments, the environment may not correctly report the amount of RAM available, so if you're getting out of memory errors, you should explicitly [set the `memory_limit` pragma](https://duckdb.org/docs/current/configuration/pragmas#memory-limit) when creating the DuckDB connection.
+You will generally get best performance on a high core count Linux or Mac machine with lots of RAM.
 
-You can find a blog post with formal benchmarks of DuckDB performance on a variety of machine types [here](https://www.robinlinacre.com/fast_deduplication/).
+These specific tips are some of the most important:
+
+- Use an in-memory connection, and avoid spill to disk.  If your job is spilling to disk, you have two options to avoid this:
+    - use the materialise-to-parquet options [todo: link to the relevant docs seciont].
+    - Chunk your workload [todo: link to the relevant docs seciont].
+- Use DuckDB 2.0, especially on large core-count machines.  Our testing suggest it paralellises subtantially better on machines with more than around 64 cores,
+- Only use chunking if you need it.  Chunking results in some duplicated calculation.
+- Performance on Mac and Linux is generally significantly better than Windows.
+- Our of memory errors: In some cloud environments, the environment may not correctly report the amount of RAM available.  To avoid out of memory errors, you should explicitly [set the `memory_limit` pragma](https://duckdb.org/docs/current/configuration/pragmas#memory-limit) when creating the DuckDB connection.
+- Store your data on an SSD and write out results to SSD.  If writing to S3, it may be faster to write to SSD and then sync to S3, see [here](https://www.robinlinacre.com/optimising_duckdb_performance_large_ec2_instances/).
+
+The easiest way to tell if your job has significant room for optimisation is to look at CPU usage through time.  If you are not using 100% of all cores for most of the main Splink operations (blocking and prediction), there is likely room for improvement by changing your configuration.
+
+You can find a historical blog post with formal benchmarks of DuckDB performance on a variety of machine types [here](https://www.robinlinacre.com/fast_deduplication/), though performance is now generally better than this.
 
 ## Configuration
 
+
+We recommend using an in memory DuckDB connection `con = duckdb.connect(":memory:")` because it makes writing large tables faster.  In particular, writing to an on-disk DuckDB database is relatively expesive because of  [todo: look in duckdb latest codebase, there are various things to make writes robust to crashes that mean writing to duckdb database files is more expensive than writing to a temp in mem connection or direct to parquet.  Insert short comment here describing findings.]
+
 ### Running out of memory
 
-If your job is running out of memory, the first thing to consider is tightening your blocking rules, or running the workload on a larger machine.
+If your job is running out of memory, then the first thing to consider is tightening your blocking rules [todo: link to the relevant docs section].
 
-If these are not possible, the following config options may help reduce memory usage:
+If this is not possible, you can relieve memory pressure whilst still using an in-memory connection using  the following options:
 
-#### Using an on-disk database
+#### Materialise to parquet
 
-DuckDB can spill to disk using several settings:
-
-Use the special `:temporary:` connection built into Splink that creates a temporary on disk database
+Materialisation directly to parquet releves pressure because intermediate results are offloaded to disk
 
 ```python
+todo: add example here
 
-db_api = DuckDBAPI(connection=":temporary:")
-df_sdf = db_api.register(df, dataset_display_name="my_data")
-linker = Linker(df_sdf, settings)
 ```
+#### Chunking `predict()`
 
-Use an on-disk database:
+If the memory pressure comes from the `predict()` step, you can split it into smaller pieces using the `num_chunks_left` and `num_chunks_right` arguments. Splink processes the chunks in series and unions the results, so only a fraction of the blocked pairs are materialised at any one time. This also gives progress reporting on long-running jobs. See the [scaling up to large datasets tutorial](../../demos/tutorials/09_scaling_up_techniques.ipynb) for details.
 
-```python
-con = duckdb.connect(database='my-db.duckdb')
-db_api = DuckDBAPI(connection=con)
-df_sdf = db_api.register(df, dataset_display_name="my_data")
-linker = Linker(df_sdf, settings)
-```
 
-Use an in-memory database, but ensure it can spill to disk:
-
-```python
-con = duckdb.connect(":memory:")
-
-con.execute("SET temp_directory='/path/to/temp';")
-db_api = DuckDBAPI(connection=con)
-df_sdf = db_api.register(df, dataset_display_name="my_data")
-linker = Linker(df_sdf, settings)
-```
-
-See also [this section](https://duckdb.org/docs/guides/performance/how-to-tune-workloads.html#larger-than-memory-workloads-out-of-core-processing) of the DuckDB docs
 
 ## Avoiding repeated computation in comparisons
 
@@ -129,6 +122,3 @@ Setting `.configure(is_null_level=True)` is important: it tells Splink to contin
 
 For more information, see [here](https://github.com/moj-analytical-services/splink/pull/2738)
 
-#### Chunking `predict()`
-
-If the memory pressure comes from the `predict()` step, you can split it into smaller pieces using the `num_chunks_left` and `num_chunks_right` arguments. Splink processes the chunks in series and unions the results, so only a fraction of the blocked pairs are materialised at any one time. This also gives progress reporting on long-running jobs. See the [scaling up to large datasets tutorial](../../demos/tutorials/09_scaling_up_techniques.ipynb) for details.
