@@ -15,7 +15,7 @@
 # %% [markdown]
 # # Predicting which records match
 #
-# <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/tutorials/05_Predicting_results.ipynb">
+# <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/ipynbs/docs/demos/tutorials/05_Predicting_results.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 #
@@ -26,7 +26,7 @@
 
 # %% tags=["hide_input"]
 # Uncomment and run this cell if you're running in Google Colab.
-# # !pip install splink
+# # !pip install "splink[altair,igraph,pyarrow]"
 
 # %%
 from splink import Linker, DuckDBAPI, splink_datasets

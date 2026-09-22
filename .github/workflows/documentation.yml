@@ -11,6 +11,7 @@ on:
       - 'master'
     paths:
       # files that affect the docs build:
+      - .github/workflows/documentation.yml
       - docs/**
       - CONTRIBUTING.md
       - mkdocs.yml
@@ -50,17 +51,64 @@ jobs:
 
       - name: Render notebooks
         id: render_notebooks
-        run: cd docs/demos && ./render_notebooks.sh -j 4
+        run: cd docs/demos && ./render_notebooks.sh -j 4 ..
 
       - name: Build documentation
         id: build_documentation
         run: uv run python -m mkdocs build
+
+      - name: Collect generated notebooks
+        run: |
+          mkdir -p "$RUNNER_TEMP/colab-notebooks"
+          find docs/demos -type f -name '*.ipynb' -exec cp --parents {} "$RUNNER_TEMP/colab-notebooks/" \;
+
+      - name: Upload generated notebooks
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: colab-notebooks
+          path: ${{ runner.temp }}/colab-notebooks/
+          if-no-files-found: error
+          retention-days: 3
 
       - name: Upload built site
         id: upload_built_site
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: site
+
+  publish-notebooks:
+    if: github.repository == 'moj-analytical-services/splink' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download generated notebooks
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: colab-notebooks
+          path: ${{ runner.temp }}/colab-notebooks
+
+      - name: Publish generated notebooks
+        working-directory: ${{ runner.temp }}/colab-notebooks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$(find docs/demos -type f -name '*.ipynb' -print -quit)"
+
+          git init --initial-branch=ipynbs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add docs/demos
+          git commit -m "Generated notebooks from $GITHUB_SHA"
+
+          gh auth setup-git --hostname github.com
+          git remote add origin https://github.com/moj-analytical-services/splink.git
+          git push --force origin HEAD:refs/heads/ipynbs
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/splink4_maintenance'

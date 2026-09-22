@@ -23,7 +23,7 @@ from splink.exploratory import profile_columns
 db_api = DuckDBAPI()
 
 df = splink_datasets.historical_50k
-df = df[["unique_id", "full_name", "dob", "birth_place"]]
+df = df.select(["unique_id", "full_name", "dob", "birth_place"])
 df_sdf = db_api.register(df)
 chart = profile_columns(df_sdf, top_n=5, bottom_n=5)
 chart
