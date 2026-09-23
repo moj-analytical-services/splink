@@ -232,6 +232,7 @@ class Comparison:
         self,
         retain_matching_columns: bool,
         retain_intermediate_calculation_columns: bool,
+        precomputed_tf_adjustments: bool = False,
     ) -> List[str]:
         input_cols = []
         for cl in self.comparison_levels:
@@ -259,16 +260,22 @@ class Comparison:
         output_cols.append(sql)
 
         if self._has_tf_adjustments:
-            sqls = [
-                cl._tf_adjustment_sql(self._gamma_column_name, self.comparison_levels)
-                for cl in self.comparison_levels
-            ]
-            sql = "\n".join(sqls)
-            sql = f"CASE\n{indent_sql(sql)}\nEND as {self._mw_tf_adj_column_name}"
-            output_cols.append(sql)
+            if precomputed_tf_adjustments:
+                output_cols.append(self._mw_tf_adj_column_name)
+            else:
+                output_cols.append(self._tf_adjustment_sql)
         output_cols.append(self._gamma_column_name)
 
         return dedupe_preserving_order(output_cols)
+
+    @property
+    def _tf_adjustment_sql(self) -> str:
+        sqls = [
+            cl._tf_adjustment_sql(self._gamma_column_name, self.comparison_levels)
+            for cl in self.comparison_levels
+        ]
+        sql = "\n".join(sqls)
+        return f"CASE\n{indent_sql(sql)}\nEND as {self._mw_tf_adj_column_name}"
 
     def _columns_to_select_for_predict(
         self,
