@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 import splink.comparison_level_library as cll
@@ -6,6 +8,31 @@ from splink import DuckDBAPI, SettingsCreator, block_on
 from splink.internals.exceptions import EMTrainingException
 from splink.internals.linker import Linker
 from tests.decorator import mark_with_dialects_excluding
+
+
+def test_em_warns_when_max_iterations_reached(fake_1000, caplog):
+    # With max_iterations=1 the model cannot converge, so training should warn
+    # that it did not converge rather than report convergence (issue #1382).
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("city"),
+        ],
+        max_iterations=1,
+    )
+    db_api = DuckDBAPI()
+    df_sdf = db_api.register(fake_1000)
+    linker = Linker(df_sdf, settings)
+
+    with caplog.at_level(logging.INFO):
+        linker.training.estimate_parameters_using_expectation_maximisation(
+            block_on("first_name")
+        )
+
+    assert "did not converge" in caplog.text
+    assert "EM converged after" not in caplog.text
 
 
 @mark_with_dialects_excluding()
