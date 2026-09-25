@@ -68,7 +68,9 @@ Filter conditions refer to any Blocking Rule that isn't a simple equality betwee
 
 `levenshtein(l.surname, r.surname) < 3`
 
-Blocking rules which use similarity or distance functions, such as the example above, are inefficient as the `levenshtein` function needs to be evaluated for all possible record comparisons before filtering out the pairs that do not satisfy the filter condition.
+Blocking rules which use similarity or distance functions, such as the example above, are inefficient as the `levenshtein` function needs to be evaluated for all possible record comparisons before filtering out the pairs that do not satisfy the filter condition. This applies to any function-based condition, regardless of SQL engine, because the engine has no way to optimise an opaque function call the way it can a direct comparison.
+
+A direct inequality between two columns (e.g. `l.dob < r.dob`, with no function wrapping either side) is a narrower case: some SQL engines have query planner optimisations for range joins that can make these more efficient than a naive filter, most notably [DuckDB's IEJoin](https://duckdb.org/2022/05/27/iejoin.html) for range conditions between column expressions. This is engine- and query-shape-dependent rather than guaranteed, so a direct inequality shouldn't automatically be assumed as inefficient as a function-based filter condition - but it also shouldn't be assumed to always get the optimisation either. If performance matters here, check the query plan for your specific engine and blocking rule rather than relying on the general rule of thumb above.
 
 
 ### Combining Blocking Rules Efficiently
