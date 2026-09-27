@@ -11,6 +11,8 @@ from unittest.mock import patch
 
 import pytest
 
+import splink.comparison_library as cl
+from splink import SettingsCreator
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.duckdb.pruned_prediction import (
     predict_from_blocked_pairs_with_source_pruning,
@@ -32,6 +34,43 @@ def _sort_predictions(sdf):
     return sdf.query_sql(
         "SELECT * FROM {this} ORDER BY unique_id_l, unique_id_r"
     ).as_dict()
+
+
+@pytest.mark.parametrize("blocking_rules", [None, []], ids=["omitted", "empty"])
+@mark_with_dialects_excluding()
+def test_all_pairs_chunked_predict_matches_non_chunked(
+    test_helpers, dialect, blocking_rules
+):
+    data = [
+        {"unique_id": 1, "name": "Alice"},
+        {"unique_id": 2, "name": "Alice"},
+        {"unique_id": 3, "name": "Bob"},
+    ]
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        probability_two_random_records_match=0.1,
+        comparisons=[
+            cl.ExactMatch("name").configure(
+                m_probabilities=[0.9, 0.1], u_probabilities=[0.1, 0.9]
+            )
+        ],
+    )
+    if blocking_rules is not None:
+        settings.blocking_rules_to_generate_predictions = blocking_rules
+    linker = test_helpers[dialect].linker_with_registration([data], settings)
+
+    expected = _sort_predictions(linker.inference.predict())
+    assert expected["unique_id_l"] == [1, 1, 2]
+    assert expected["unique_id_r"] == [2, 3, 3]
+    linker.table_management.invalidate_cache()
+
+    actual = _sort_predictions(
+        linker.inference.predict(num_chunks_left=2, num_chunks_right=2)
+    )
+    assert actual["unique_id_l"] == expected["unique_id_l"]
+    assert actual["unique_id_r"] == expected["unique_id_r"]
+    assert actual["match_weight"] == pytest.approx(expected["match_weight"])
+    assert actual["match_probability"] == pytest.approx(expected["match_probability"])
 
 
 @mark_with_dialects_excluding()

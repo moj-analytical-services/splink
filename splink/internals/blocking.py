@@ -629,6 +629,12 @@ def compute_blocked_pairs_from_concat_with_tf(
     """
     start_time = time.time()
 
+    # The all-pairs fallback needs the backend dialect to generate chunk filters.
+    if not blocking_rules:
+        blocking_rules = [
+            BlockingRule("1=1", sql_dialect_str=db_api.sql_dialect.sql_dialect_str)
+        ]
+
     blocking_input_tablename_l = df_concat_with_tf_table_name
     blocking_input_tablename_r = df_concat_with_tf_table_name
     effective_link_type = link_type
