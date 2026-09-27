@@ -2909,7 +2909,7 @@ requires-dist = [
     { name = "sqlalchemy", marker = "extra == 'postgres'", specifier = ">=2.0.0" },
     { name = "sqlglot", specifier = ">=17.6.0" },
 ]
-provides-extras = ["altair", "igraph", "pyspark", "spark", "sqlite", "postgres", "pyarrow"]
+provides-extras = ["altair", "igraph", "pyspark", "spark", "sqlite", "postgres"]
 
 [package.metadata.requires-dev]
 core = [
