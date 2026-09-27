@@ -27,6 +27,7 @@ For example, consider a simple model:
 
 ```py linenums="1"
 import splink.comparison_library as cl
+from splink import SettingsCreator, block_on
 
 settings = SettingsCreator(
     link_type="dedupe_only",
@@ -157,7 +158,7 @@ With our finalised settings object, we can train a Splink model using the follow
     pairwise_predictions = linker.inference.predict()
 
     clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
-    clusters.as_pandas_dataframe(limit=5)
+    clusters.as_record_list(limit=5)
 
     ```
 
@@ -195,7 +196,7 @@ which, using the example settings and model training from above, gives the follo
         "linker_uid": "29phy7op",
         "em_convergence": 0.0001,
         "max_iterations": 25,
-        "bayes_factor_column_prefix": "bf_",
+        "match_weight_column_prefix": "mw_",
         "term_frequency_adjustment_column_prefix": "tf_",
         "comparison_vector_value_column_prefix": "gamma_",
         "unique_id_column_name": "unique_id",
@@ -403,7 +404,7 @@ For example in the first name exact match level:
     "label_for_charts": "Exact match on first_name",
     "m_probability": 0.48854806009621365,
     "u_probability": 0.0056770619302010565
-},
+}
 
 ```
 
@@ -414,11 +415,8 @@ where the `m_probability` and `u_probability` values here are then used to gener
 When using a pre-trained model, you can read in the model from a json and recreate the linker object to make new pairwise predictions. For example:
 
 ```py
-linker = Linker(
-    new_df,
-    settings="./path/to/model.json",
-    db_api=db_api
-)
+new_sdf = db_api.register(new_df, dataset_display_name="new_data")
+linker = Linker(new_sdf, settings="model.json")
 
 ```
 

@@ -31,7 +31,7 @@ from splink import ColumnExpression
 email_lowercase = ColumnExpression("email").lower()
 dob_as_string = ColumnExpression("dob").cast_to_string()
 surname_initial_lowercase = ColumnExpression("surname").substr(1, 1).lower()
-entry_date = ColumnExpression("entry_date_str").try_parse_date(date_format="YYYY-MM-DD")
+entry_date = ColumnExpression("entry_date_str").try_parse_date()
 full_name_lowercase = ColumnExpression("first_name || ' ' || surname").lower()
 ```
 

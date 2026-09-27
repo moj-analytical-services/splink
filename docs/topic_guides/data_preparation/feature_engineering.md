@@ -163,7 +163,7 @@ print(pc_comparison.human_readable_description)
     ```
 
 
-or by using `cll.distance_in_km_level()` in conjunction with other comparison levels:
+or by using `cll.DistanceInKMLevel()` in conjunction with other comparison levels:
 
 
 ```python

@@ -77,7 +77,7 @@ For example:
 from splink.datasets import splink_dataset_utils
 
 splink_dataset_utils.show_downloaded_data()
-splink_dataset_utils.clear_cache(['fake_1000'])
+splink_dataset_utils.clear_downloaded_data(['fake_1000'])
 ```
 
 ::: splink.internals.datasets.utils.SplinkDataUtils
