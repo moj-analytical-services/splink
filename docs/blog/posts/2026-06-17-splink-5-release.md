@@ -34,7 +34,7 @@ However, Splink 5 syntax is not fully backwards compatible and Splink 4 scripts 
 
 - **Faster, easier blocking analysis.** Comparison counts are now estimated from a record sample by default, making blocking-rule design much faster on large data. Exact counts remain available with `record_sample_proportion=1.0`.  In addition to standalone functions, blocking analysis is now available on the `linker` object for convenience.
 
-- **Fewer dependencies for simpler and safer installs.** Splink now depends on only `sqlglot` and `duckdb`, which themselves have no dependencies.  Pandas, NumPy, Altair and Jinja2 are now optional. This makes Splink quicker and easier to install, reduces dependency conflicts, and substantially shrinks its software supply chain surface.
+- **Fewer dependencies for simpler and safer installs.** Splink now depends on only `sqlglot`, `duckdb` and `pyarrow`, which themselves have no dependencies.  Pandas, NumPy, Altair and Jinja2 are now optional. For pandas inputs or outputs, install pandas separately. This makes Splink quicker and easier to install, reduces dependency conflicts, and substantially shrinks its software supply chain surface.
 
 - **Incremental linkage is more cleanly supported.** If you have already linked a large dataset and receive some new records, it's common to want to create only the new pairwise comparisons, avoiding the need to re-link the entire dataset. This can now be achieved using the new `predict_within()` and `predict_between()` API. This is a more flexible and robust replacement for the previous `find_matches_to_new_records()` function.
 

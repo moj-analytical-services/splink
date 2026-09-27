@@ -2892,6 +2892,7 @@ version = "5.0.0.dev5"
 source = { editable = "../../" }
 dependencies = [
     { name = "duckdb" },
+    { name = "pyarrow" },
     { name = "sqlglot" },
 ]
 
@@ -2901,7 +2902,7 @@ requires-dist = [
     { name = "duckdb", specifier = ">=0.9.2" },
     { name = "igraph", marker = "extra == 'igraph'", specifier = ">=0.11.2" },
     { name = "psycopg2-binary", marker = "extra == 'postgres'", specifier = ">=2.9.0" },
-    { name = "pyarrow", marker = "extra == 'pyarrow'", specifier = ">=15.0.0" },
+    { name = "pyarrow", specifier = ">=18.0.0" },
     { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.0" },
     { name = "pyspark", marker = "extra == 'spark'", specifier = ">=3.5.0" },
     { name = "rapidfuzz", marker = "extra == 'sqlite'", specifier = ">=3.10.0" },
