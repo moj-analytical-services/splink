@@ -119,16 +119,6 @@ class SettingsCreator:
                     if isinstance(br, dict):
                         if "sql_dialect" in br:
                             del br["sql_dialect"]
-                        if "salting_partitions" in br:
-                            warnings.warn(
-                                "The 'salting_partitions' parameter is deprecated "
-                                "and has been ignored. This affect how Splink "
-                                "parallelises your computation, but the end result will"
-                                " be identical.",
-                                DeprecationWarning,
-                                stacklevel=2,
-                            )
-                            del br["salting_partitions"]
             else:
                 raise ValueError(
                     f"Path {settings_path} does not point to a valid file."
@@ -141,6 +131,18 @@ class SettingsCreator:
                 f"Argument {path_or_dict=} must be of type `pathlib.Path`, "
                 f"`str`, or `dict`.  Found type {type(path_or_dict)}"
             )
+
+        for br in settings_dict.get("blocking_rules_to_generate_predictions", []):
+            if isinstance(br, dict) and "salting_partitions" in br:
+                warnings.warn(
+                    "The 'salting_partitions' parameter is deprecated "
+                    "and has been ignored. This affects how Splink "
+                    "parallelises your computation, but the end result will "
+                    "be identical.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                del br["salting_partitions"]
 
         # TODO: should SettingsCreator deal with the logic of sql_dialect being
         # set?
