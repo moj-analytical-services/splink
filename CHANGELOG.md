@@ -7,13 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Fixed
+## [5.0.0] - 2026-09-28
 
-- Updated `.jar` (0.2.1) with newer dependency versions [#3098](https://github.com/moj-analytical-services/splink/pull/3098)
-
-## [5.0.0]
-
-Major release - see our [blog](docs/blog/posts/2026-06-17-splink-5-release.md). Significant changes as follows. See also [comprehensive note of changes](https://gist.github.com/RobinL/c6d56a27d8f83c40b6b09643c0fa5d14).
+Major release - see our [blog](docs/blog/posts/2026-09-28-splink-5-release.md). Significant changes as follows. See also [comprehensive note of changes](https://gist.github.com/RobinL/c6d56a27d8f83c40b6b09643c0fa5d14).
 
 ### Added
 
@@ -25,7 +21,7 @@ Major release - see our [blog](docs/blog/posts/2026-06-17-splink-5-release.md). 
 
 - **Faster training and blocking analysis:** u estimation uses chunks and can stop once comparison levels have enough observations; EM training supports a `max_pairs` cap; prior estimation and blocking analysis support record sampling. Blocking counts are sampled by default, with exact counts still available.
 - **Explicit input registration:** register inputs with `db_api.register()` before passing them to `Linker`; the constructor no longer takes `db_api=`. `query_sql()` returns a `SplinkDataFrame` by default, and `as_record_dict()` is renamed to `as_record_list()`.
-- **Smaller installation:** only DuckDB and SQLGlot are required at runtime. Pandas, NumPy, Altair, and igraph are optional; install `splink[igraph]` when the `is_bridge` edge metric is needed.
+- **Smaller installation:** only DuckDB, PyArrow, and SQLGlot are required at runtime. Pandas, NumPy, Altair, and igraph are optional; install `splink[igraph]` when the `is_bridge` edge metric is needed.
 - **Charts without Altair:** charts and column profiles use `SplinkChart`, with native notebook display and HTML export, including offline HTML. Install `splink[altair]` for Altair customisation and advanced exports; Jinja2 is no longer required for chart or dashboard rendering.
 - **More stable scoring:** probabilistic calculations use match weights (log-odds), with output prefixes changing from `bf_` to `mw_`. `bayes_factor_column_prefix` is deprecated in favour of `match_weight_column_prefix`.
 - **Date-of-birth comparisons:** `DateOfBirthComparison` uses standard Levenshtein distance on all supported backends. Transposed digits may fall into a different comparison level when rebuilding a model from the template.
@@ -34,6 +30,10 @@ Major release - see our [blog](docs/blog/posts/2026-06-17-splink-5-release.md). 
 
 - Python 3.9 and Amazon Athena support. Splink 5 requires Python 3.10 or later.
 - Legacy inference methods `compare_two_records()` and `find_matches_to_new_records()`, implicit caching and `use_cache`, salting, the `materialise_blocked_pairs` argument, and the exploratory similarity-analysis helpers. See the comprehensive note for replacements and migration details.
+
+### Fixed
+
+- Updated `.jar` (0.2.1) with newer dependency versions [#3098](https://github.com/moj-analytical-services/splink/pull/3098)
 
 ## [4.0.16] - 2026-03-11
 
@@ -314,7 +314,8 @@ Major release - see our [blog](https://moj-analytical-services.github.io/splink/
 - Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 - Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
 
-[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v4.0.16...HEAD
+[Unreleased]: https://github.com/moj-analytical-services/splink/compare/v5.0.0...HEAD
+[5.0.0]: https://github.com/moj-analytical-services/splink/compare/v4.0.17...v5.0.0
 [4.0.16]: https://github.com/moj-analytical-services/splink/compare/v4.0.15...v4.0.16
 [4.0.15]: https://github.com/moj-analytical-services/splink/compare/v4.0.14...v4.0.15
 [4.0.14]: https://github.com/moj-analytical-services/splink/compare/v4.0.13...v4.0.14
