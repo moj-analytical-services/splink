@@ -8,7 +8,7 @@
 
 
 > [!IMPORTANT]
-> 🎉 Splink 4 has been released! Examples of new syntax are [here](https://moj-analytical-services.github.io/splink/demos/examples/examples_index.html) and a release announcement is [here](https://moj-analytical-services.github.io/splink/blog/2024/07/24/splink-400-released.html).
+> 🎉 Splink 5 has been released! Examples of new syntax are [here](https://moj-analytical-services.github.io/splink/demos/examples/examples_index.html) and a release announcement is [here](https://moj-analytical-services.github.io/splink/blog/2026/09/28/splink-500-released.html).
 
 
 # Fast, accurate and scalable data linkage and deduplication
