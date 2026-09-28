@@ -288,6 +288,7 @@ def profile_columns(
     """
     db_api = get_db_api_from_inputs(splink_dataframe_or_dataframes)
     splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
+    existing_tables = db_api._created_tables.copy()
 
     pipeline = CTEPipeline()
     sql = vertically_concatenate_sql(splink_df_dict, source_dataset_input_column=None)
@@ -372,7 +373,12 @@ def profile_columns(
             )
             inner_charts.append(inner_chart)
 
-    db_api.delete_tables_created_by_splink_from_db()
+    # The API may also own inputs, predictions and term-frequency tables.
+    for physical_name in db_api._created_tables - existing_tables:
+        frame = db_api.table_to_splink_dataframe(physical_name, physical_name)
+        db_api.delete_table_from_database(physical_name)
+        db_api.remove_splinkdataframe_from_cache(frame)
+        db_api._created_tables.discard(physical_name)
 
     if inner_charts:
         return ProfileColumnsChart(records=inner_charts)
