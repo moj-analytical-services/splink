@@ -10,7 +10,7 @@ categories:
 # Splink 5.0.0 released
 
 
-[Splink](../../index.md) is a free and open source library for record linkage and deduplication, capable of processing 1 billion records or more. It is [widely used](../../index.md#use-cases) in government, academia and the private sector and has been downloaded over 20 million times.
+[Splink](../../index.md) is a free and open source library for record linkage and deduplication, capable of [processing 1 billion records in less than 10 minutes](../../topic_guides/performance/duckdb_performance_reprex.md). It is [widely used](../../index.md#use-cases) in government, academia and the private sector and has been downloaded over 22 million times.
 
 We're pleased to release Splink version 5, which is more scalable, faster to train models, lighter to install, and easier to run in production than Splink 4.
 
