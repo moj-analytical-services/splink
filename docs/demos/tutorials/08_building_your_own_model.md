@@ -15,7 +15,7 @@ In a nutshell, we recommend beginning with a small sample and a basic model, the
 
     You need a **non-random** sample of perhaps about 10,000 records. The same must be  non-random because it must retain lots of matches - for instance, retain all people aged over 70, or all people with a first name starting with the characters `pa`.  You should aim to be able to run your full training and prediction script in less than a minute.
 
-    Remember to set a lower value (say `1e6`) of the `target_rows` when calling `estimate_u_using_random_sampling()` during this iteration process, but then increase in the final full-dataset run to a much higher value, maybe `1e8`, since large value of `target_rows` can cause long processing times even on relatively small datasets.
+    Remember to set a lower value (say `1e6`) of the `max_pairs` when calling `estimate_u_using_random_sampling()` during this iteration process, but then increase in the final full-dataset run to a much higher value, maybe `1e8`, since large value of `max_pairs` can cause long processing times even on relatively small datasets.
 
 - **Start with a simple model**.  It's often tempting to start by designing a complex model, with many granular comparison levels in an attempt to reflect the real world closely.
 
@@ -27,7 +27,7 @@ In a nutshell, we recommend beginning with a small sample and a basic model, the
 
 - **Analyse the number of comparisons before running predict**.  Use the tools in `splink.blocking_analysis` to validate that your rules aren't going to create a vast number of comparisons before asking Splink to create those comparisons.
 
-- **Many strict `blocking_rules_for_prediction` are generally better than few loose rules.**  Whilst individually, strict blocking rules are likely to exclude many true matches, between them it should be implausible that a truly matching record 'falls through' all the rules.  Many strict rules often result in far fewer overall comparisons and a small number of loose rules.  In practice, many of our real-life models have between about 10-15 `blocking_rules_for_prediction`.
+- **Many strict `blocking_rules_to_generate_predictions` are generally better than few loose rules.**  Whilst individually, strict blocking rules are likely to exclude many true matches, between them it should be implausible that a truly matching record 'falls through' all the rules.  Many strict rules often result in far fewer overall comparisons and a small number of loose rules.  In practice, many of our real-life models have between about 10-15 `blocking_rules_to_generate_predictions`.
 
 
 ## EM trainining
@@ -47,7 +47,7 @@ To optimise memory usage and performance:
 - **Avoid pandas for data cleaning**.  You will generally get substantially better performance by performing data cleaning in SQL using your chosen backend rather than using pandas.
 
 - **Turn off intermediate columns when calling `predict()`**.  Whilst during the model development phase, it is useful to set `retain_intermediate_calculation_columns=True` and
-    `retain_intermediate_calculation_columns_for_prediction=True` in your settings, you should generally turn these off when calling `predict()`.  This will result in a much smaller table as your result set.  If you want waterfall charts for individual pairs, you can use [`linker.inference.score_pair`](../../api_docs/inference.md)
+    `retain_matching_columns=True` in your settings, you should generally turn these off when calling `predict()`.  This will result in a much smaller table as your result set.  If you want waterfall charts for individual pairs, you can use [`linker.inference.score_pair`](../../api_docs/inference.md)
 
 ## :material-flag-checkered: That's it!
 

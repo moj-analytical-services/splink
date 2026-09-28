@@ -98,6 +98,7 @@ email_comparison = cl.EmailComparison("email").configure(
 ### Comparison level library functions
 
 ```py
+import splink.comparison_library as cl
 import splink.comparison_level_library as cll
 
 name_comparison = cl.CustomComparison(
@@ -106,6 +107,7 @@ name_comparison = cl.CustomComparison(
     comparison_levels=[
         cll.NullLevel("full_name"),
         cll.ExactMatchLevel("full_name").configure(tf_adjustment_column="full_name"),
+        cll.ExactMatchLevel("surname").configure(tf_adjustment_column="surname"),
         cll.ColumnsReversedLevel("first_name", "surname").configure(
             tf_adjustment_column="surname"
         ),
@@ -115,7 +117,12 @@ name_comparison = cl.CustomComparison(
 
 ```
 
+The exact-match level on `surname` supplies the u probability needed by the
+TF adjustment on the reversed-column level.
+
 ### Providing a detailed spec as a dictionary
+
+This example uses DuckDB SQL.
 
 ```py
 comparison_first_name = {
@@ -135,7 +142,7 @@ comparison_first_name = {
             "tf_minimum_u_value": 0.001,
         },
         {
-            "sql_condition": "jaro_winkler_sim(first_name_l, first_name_r) > 0.8",
+            "sql_condition": "jaro_winkler_similarity(first_name_l, first_name_r) > 0.8",
             "label_for_charts": "Exact match",
             "tf_adjustment_column": "first_name",
             "tf_adjustment_weight": 0.5,
@@ -163,7 +170,7 @@ ethnicity_comparison = cl.CustomComparison(
         cll.NullLevel("ethnicity"),
         cll.ExactMatchLevel("ethnicity").configure(tf_adjustment_column="ethnicity"),
         cll.ExactMatchLevel("ethnic_group").configure(tf_adjustment_column="ethnic_group"),
-        cll.else_level(),
+        cll.ElseLevel(),
     ],
 )
 ```
@@ -179,7 +186,7 @@ name_comparison = cl.CustomComparison(
         cll.ExactMatchLevel("full_name").configure(tf_adjustment_column="full_name"),
         cll.ExactMatchLevel("first_name").configure(tf_adjustment_column="first_name"),
         cll.ExactMatchLevel("surname").configure(tf_adjustment_column="surname"),
-        cll.else_level(),
+        cll.ElseLevel(),
     ],
 )
 
@@ -197,7 +204,7 @@ TF adjustments will not be applied to any comparison level without explicitly be
 
 ```py
 {
-  "sql_condition": "jaro_winkler_sim(first_name_l, first_name_r) > 0.8",
+  "sql_condition": "jaro_winkler_similarity(first_name_l, first_name_r) > 0.8",
   "label_for_charts": "Exact match",
   "tf_adjustment_column": "first_name",
   "tf_adjustment_weight": 0.5

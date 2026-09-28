@@ -107,6 +107,7 @@ from splink import DuckDBAPI, Linker, SettingsCreator, block_on, splink_datasets
 db_api = DuckDBAPI()
 
 df = splink_datasets.fake_1000
+df_sdf = db_api.register(df, dataset_display_name="fake_1000")
 
 settings = SettingsCreator(
     link_type="dedupe_only",
@@ -115,7 +116,7 @@ settings = SettingsCreator(
         cl.JaroAtThresholds("surname", [0.9, 0.7]),
         cl.DateOfBirthComparison(
             "dob",
-            input_is_string=True,
+            input_is_string=False,
             datetime_metrics=["year", "month"],
             datetime_thresholds=[1, 1],
         ),
@@ -128,7 +129,7 @@ settings = SettingsCreator(
     ]
 )
 
-linker = Linker(df, settings, db_api)
+linker = Linker(df_sdf, settings)
 
 linker.training.estimate_probability_two_random_records_match(
     [block_on("first_name", "surname")],
@@ -149,7 +150,7 @@ clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
     pairwise_predictions, 0.95
 )
 
-df_clusters = clusters.as_pandas_dataframe(limit=5)
+cluster_records = clusters.as_duckdbpyrelation(limit=5)
 ```
 
 ## Videos
