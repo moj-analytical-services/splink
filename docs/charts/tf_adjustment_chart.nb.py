@@ -17,7 +17,9 @@
 #
 
 # %% tags=["hide_input"]
-# chart TODO: display artifact
+from IPython.display import display, update_display
+
+_ = display("", display_id="gallery_chart")
 
 # %% [markdown]
 # !!! info "At a glance"
@@ -133,3 +135,6 @@ chart = linker.visualisations.tf_adjustment_chart(
     "first_name", vals_to_include=["Robert", "Grace"]
 )
 chart
+
+# %% tags=["hide_input"]
+update_display(chart, display_id="gallery_chart")

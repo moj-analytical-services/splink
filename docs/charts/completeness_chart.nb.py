@@ -17,7 +17,9 @@
 #
 
 # %% tags=["hide_input"]
-# chart TODO: display artifact
+from IPython.display import display, update_display
+
+_ = display("", display_id="gallery_chart")
 
 # %% [markdown]
 #
@@ -82,3 +84,6 @@ sdf_r = db_api.register(df_r)
 
 chart = completeness_chart([sdf_l, sdf_r])
 chart
+
+# %% tags=["hide_input"]
+update_display(chart, display_id="gallery_chart")
