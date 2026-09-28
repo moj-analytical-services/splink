@@ -88,14 +88,9 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         return self._ddb_con
 
     def _new_input_table_name(self) -> str:
-        while True:
-            name = f"__splink__input_table_{self._input_table_counter}"
-            self._input_table_counter += 1
-            if (
-                name not in self._registered_table_names
-                and not self.table_exists_in_database(name)
-            ):
-                return name
+        name = f"__splink__input_table_{self._input_table_counter}"
+        self._input_table_counter += 1
+        return name
 
     @final
     def _log_and_run_sql_execution(
@@ -274,6 +269,7 @@ class DatabaseAPI(ABC, Generic[TablishType]):
         dataset_display_name: Optional[str] = None,
         table_name: Optional[str] = None,
     ) -> SplinkDataFrame:
+        table_name_is_generated = table_name is None and dataset_display_name is None
         table_name = table_name or dataset_display_name or self._new_input_table_name()
         dataset_display_name = dataset_display_name or table_name
 
@@ -292,7 +288,13 @@ class DatabaseAPI(ABC, Generic[TablishType]):
             physical_name = table
             sdf = self.table_to_splink_dataframe(table_name, physical_name)
         else:
-            sdf = self._create_backend_table(table, table_name, overwrite=False)
+            # Allow overwrite of table only if Splink is assigning the name
+            # i.e. allow overwrites of tables of the form __splink__input_table_n
+            sdf = self._create_backend_table(
+                table,
+                table_name,
+                overwrite=table_name_is_generated,
+            )
 
         sdf.dataset_display_name = dataset_display_name
         return sdf
