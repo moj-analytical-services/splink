@@ -158,7 +158,7 @@ With our finalised settings object, we can train a Splink model using the follow
     pairwise_predictions = linker.inference.predict()
 
     clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
-    clusters.as_record_list(limit=5)
+    clusters.as_duckdbpyrelation(limit=5)
 
     ```
 
@@ -416,7 +416,7 @@ When using a pre-trained model, you can read in the model from a json and recrea
 
 ```py
 new_sdf = db_api.register(new_df, dataset_display_name="new_data")
-linker = Linker(new_sdf, settings="model.json")
+linker = Linker(new_sdf, settings="./path/to/model.json")
 
 ```
 

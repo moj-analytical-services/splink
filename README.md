@@ -150,7 +150,7 @@ clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
     pairwise_predictions, 0.95
 )
 
-cluster_records = clusters.as_record_list(limit=5)
+cluster_records = clusters.as_duckdbpyrelation(limit=5)
 ```
 
 ## Videos
