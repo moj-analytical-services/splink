@@ -237,6 +237,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
         names_to_repartition = [
             r"__splink__df_comparison_vectors",
+            r"__splink__df_comparison_vectors_with_tf",
             r"__splink__df_blocked",
             r"__splink__df_neighbours",
             r"__splink__df_representatives",
@@ -291,6 +292,7 @@ class SparkAPI(DatabaseAPI[spark_df]):
 
         regex_to_persist = [
             r"__splink__df_comparison_vectors",
+            r"__splink__df_comparison_vectors_with_tf",
             r"__splink__df_concat_sample",
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
