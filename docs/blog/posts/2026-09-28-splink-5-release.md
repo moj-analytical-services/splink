@@ -14,6 +14,8 @@ categories:
 
 We're pleased to release Splink version 5, which is more scalable, faster to train models, lighter to install, and easier to run in production than Splink 4.
 
+<!-- more -->
+
 ## Backwards compatibility
 
 There has been no change to the statistical model. Models trained in Splink 4 produce the same results in Splink 5, and the model serialisation format is unchanged, so models saved from Splink 4 in `.json` format can be loaded directly into Splink 5.
