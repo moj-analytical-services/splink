@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from math import isfinite
 from typing import TYPE_CHECKING, List, Optional
 
 from splink.internals.connected_components import (
@@ -102,11 +103,29 @@ class LinkerClustering:
         match_prob_col = linker._settings_obj._input_column("match_probability")
         has_match_prob_col = match_prob_col in df_predict.columns
 
+        match_weight_col = linker._settings_obj._input_column("match_weight")
+        has_match_weight_col = match_weight_col in df_predict.columns
+
+        # If the user supplied the threshold as a match weight and df_predict has
+        # the match_weight column, filter edges in match weight space. Converting
+        # the threshold to a match probability loses precision, because match
+        # probability saturates to 1.0 for match weights above ~53, making high
+        # match weights indistinguishable (issue #3002).
+        filter_on_match_weight = (
+            threshold_match_weight is not None
+            and isfinite(threshold_match_weight)
+            and has_match_weight_col
+        )
+
         threshold_match_probability = threshold_args_to_match_prob(
             threshold_match_probability, threshold_match_weight
         )
 
-        if not has_match_prob_col and threshold_match_probability is not None:
+        if (
+            not has_match_prob_col
+            and not filter_on_match_weight
+            and threshold_match_probability is not None
+        ):
             raise ValueError(
                 "df_predict must have a column called 'match_probability' if "
                 "threshold_match_probability is provided"
@@ -114,7 +133,10 @@ class LinkerClustering:
 
         match_p_expr = ""
         match_p_select_expr = ""
-        if threshold_match_probability is not None:
+        if filter_on_match_weight:
+            match_p_expr = f"where match_weight >= {threshold_match_weight}"
+            match_p_select_expr = ", match_weight"
+        elif threshold_match_probability is not None:
             match_p_expr = f"where match_probability >= {threshold_match_probability}"
             match_p_select_expr = ", match_probability"
 
@@ -144,6 +166,9 @@ class LinkerClustering:
             edge_id_column_name_right="node_id_r",
             db_api=db_api,
             threshold_match_probability=threshold_match_probability,
+            threshold_match_weight=(
+                threshold_match_weight if filter_on_match_weight else None
+            ),
         )
 
         edges_table_with_composite_ids.drop_table_from_database_and_remove_from_cache()

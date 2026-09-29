@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import time
+from math import isfinite
 from typing import Optional
 
 from splink.internals.database_api import DatabaseAPISubClass
@@ -126,6 +127,7 @@ def solve_connected_components(
     edge_id_column_name_right: str,
     db_api: DatabaseAPISubClass,
     threshold_match_probability: Optional[float],
+    threshold_match_weight: Optional[float] = None,
 ) -> SplinkDataFrame:
     """Connected Components main algorithm.
 
@@ -148,6 +150,12 @@ def solve_connected_components(
             Database API.
         threshold_match_probability (float, optional):
             Threshold above which to accept edges as links.
+        threshold_match_weight (float, optional):
+            The threshold expressed as a match weight. When the edges table has a
+            match_weight column and this is finite, edges are filtered on match
+            weight rather than match probability. This avoids the precision loss
+            where high match weights have a match probability that rounds to 1.0,
+            making them indistinguishable (issue #3002).
 
     Returns:
         SplinkDataFrame: A dataframe containing the connected components list
@@ -161,8 +169,21 @@ def solve_connected_components(
 
     pipeline = CTEPipeline([edges_table])
 
-    match_prob_expr = f"where match_probability >= {threshold_match_probability}"
-    if threshold_match_probability is None:
+    # Filter edges on match weight when possible. Match probability saturates to
+    # 1.0 for high match weights, so filtering on probability cannot distinguish
+    # edges above a match weight of ~53 (issue #3002). Match weight does not
+    # saturate, so we prefer it whenever the edges table carries the column and a
+    # finite weight threshold is available, falling back to probability otherwise.
+    edge_columns = [c.unquote().name for c in edges_table.columns]
+    if (
+        threshold_match_weight is not None
+        and isfinite(threshold_match_weight)
+        and "match_weight" in edge_columns
+    ):
+        match_prob_expr = f"where match_weight >= {threshold_match_weight}"
+    elif threshold_match_probability is not None:
+        match_prob_expr = f"where match_probability >= {threshold_match_probability}"
+    else:
         match_prob_expr = ""
 
     # add reverse edges so these can also be considered by the algorithm
