@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Include chart definition JSON files when building wheel distribution packages by configuring `ignore-vcs = true` on the Hatchling wheel target ([#3311](https://github.com/moj-analytical-services/splink/issues/3311)).
+
 ## [5.0.0] - 2026-09-28
 
 Major release - see our [blog](docs/blog/posts/2026-09-28-splink-5-release.md). Significant changes as follows. See also [comprehensive note of changes](https://gist.github.com/RobinL/c6d56a27d8f83c40b6b09643c0fa5d14).
