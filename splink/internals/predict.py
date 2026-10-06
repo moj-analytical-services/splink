@@ -51,7 +51,9 @@ def predict_from_comparison_vectors_sqls(
     training_mode: bool = False,
     additional_columns_to_retain: List[InputColumn] = [],
     include_clerical_match_score: bool = False,
+    use_precomputed_tf_training_table: bool = False,
 ) -> list[dict[str, str]]:
+    assert not use_precomputed_tf_training_table or training_mode
     sqls = []
 
     select_cols = Settings.columns_to_select_for_match_weight_parts(
@@ -60,16 +62,24 @@ def predict_from_comparison_vectors_sqls(
         retain_matching_columns=retain_matching_columns,
         retain_intermediate_calculation_columns=retain_intermediate_calculation_columns,
         additional_columns_to_retain=additional_columns_to_retain,
+        precomputed_tf_adjustments=use_precomputed_tf_training_table,
+        retain_record_identifiers=not use_precomputed_tf_training_table,
     )
     if include_clerical_match_score:
         select_cols.append("clerical_match_score")
 
     select_cols_expr = ",\n".join(indent_sql(col) for col in select_cols)
 
+    input_table = (
+        "__splink__df_comparison_vectors_with_tf"
+        if use_precomputed_tf_training_table
+        else "__splink__df_comparison_vectors"
+    )
+
     sql = f"""
     select
 {select_cols_expr}
-    from __splink__df_comparison_vectors
+    from {input_table}
     """
 
     sql_info = {
@@ -85,6 +95,7 @@ def predict_from_comparison_vectors_sqls(
         retain_intermediate_calculation_columns=retain_intermediate_calculation_columns,
         training_mode=training_mode,
         additional_columns_to_retain=additional_columns_to_retain,
+        retain_record_identifiers=not use_precomputed_tf_training_table,
     )
     mw_terms = []
     for cc in core_model_settings.comparisons:
