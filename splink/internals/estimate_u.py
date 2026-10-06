@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import math
 import time
 from copy import deepcopy
 from functools import partial
@@ -13,7 +12,7 @@ from splink.internals.m_u_records_to_parameters import (
     append_u_probability_to_comparison_level_trained_probabilities,
     m_u_records_to_lookup_dict,
 )
-from splink.internals.misc import ascii_uid, calculate_cartesian, indent_sql
+from splink.internals.misc import ascii_uid, indent_sql
 from splink.internals.pipeline import CTEPipeline
 from splink.internals.settings import LinkTypeLiteralType, Settings
 from splink.internals.unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -50,7 +49,6 @@ def _estimate_u_comparison_vector_sqls(
     cv_cols: list[str],
     rhs_chunk_num: int,
     rhs_num_chunks: int,
-    pair_sampling_proportion: float,
 ) -> list[dict[str, str]]:
     unique_id_columns = [unique_id_input_column]
     if source_dataset_input_column is not None:
@@ -66,7 +64,7 @@ def _estimate_u_comparison_vector_sqls(
 
     # An equijoin samples pairs across both inputs without a Cartesian product.
     # Different offsets select disjoint pairs, including when records are reused.
-    num_buckets = math.ceil(rhs_num_chunks / pair_sampling_proportion)
+    num_buckets = rhs_num_chunks
     join_condition = (
         f"l.__splink__u_hash_l % {num_buckets} = "
         f"(r.__splink__u_hash_r % {num_buckets} + {rhs_chunk_num - 1}) "
@@ -211,7 +209,6 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
     cv_cols: list[str],
     rhs_chunk_num: int,
     rhs_num_chunks: int,
-    pair_sampling_proportion: float,
     counts_accumulator: _MUCountsAccumulator,
     min_count_per_level: int | None,
     probe_percent_of_max_pairs: float | None = None,
@@ -241,7 +238,6 @@ def _accumulate_u_counts_from_chunk_and_check_min_count(
         cv_cols=cv_cols,
         rhs_chunk_num=rhs_chunk_num,
         rhs_num_chunks=rhs_num_chunks,
-        pair_sampling_proportion=pair_sampling_proportion,
     )
 
     pipeline.enqueue_list_of_sqls(comparison_vector_sqls)
@@ -353,8 +349,6 @@ def estimate_u_values(
     )
     if num_chunks < 1:
         raise ValueError("num_chunks must be >= 1")
-    if max_pairs <= 0:
-        raise ValueError("max_pairs must be > 0")
     pipeline = CTEPipeline()
 
     pipeline = enqueue_df_concat(linker, pipeline)
@@ -386,7 +380,7 @@ def estimate_u_values(
         result = count_dataframe.as_record_list()
         count_dataframe.drop_table_from_database_and_remove_from_cache()
         total_nodes = result[0]["count"]
-        sample_size = max(10_000, _rows_needed_for_n_pairs(max_pairs))
+        sample_size = _rows_needed_for_n_pairs(max_pairs)
         proportion = sample_size / total_nodes
 
     if settings_obj._link_type == "link_only":
@@ -403,16 +397,18 @@ def estimate_u_values(
         result = counts_dataframe.as_record_list()
         counts_dataframe.drop_table_from_database_and_remove_from_cache()
         frame_counts = [res["count"] for res in result]
+
         proportion, sample_size = _proportion_sample_size_link_only(
             frame_counts, max_pairs
         )
-        # Use a common sampling rate to preserve the relative weights of dataset
-        # pairs, targeting at least 10,000 records in the smallest input.
-        proportion = max(proportion, 10_000 / min(frame_counts))
 
-    proportion = min(1.0, proportion)
-    total_pairs = calculate_cartesian(result, settings_obj._link_type)
-    pair_sampling_proportion = min(1.0, max_pairs / max(total_pairs * proportion**2, 1))
+        total_nodes = sum(frame_counts)
+
+    if proportion >= 1.0:
+        proportion = 1.0
+
+    if sample_size > total_nodes:
+        sample_size = total_nodes
 
     pipeline = CTEPipeline()
     pipeline = enqueue_df_concat(training_linker, pipeline)
@@ -424,18 +420,11 @@ def estimate_u_values(
     uid_expr = _composite_unique_id_from_nodes_sql(uid_cols)
     hash_columns = []
     for side in ("l", "r"):
-        # Salt each role separately from the record-sampling hash. Combine two
-        # hashes to support large bucket counts on backends with 32-bit hashes.
-        hashes = [
-            db_api.sql_dialect.hash_bucket_expression(
-                f"({uid_expr}) || '__splink_u_{seed}_{side}_{part}'", 2**31
-            )
-            for part in (0, 1)
-        ]
-        hash_columns.append(
-            f"cast({hashes[0]} as bigint) * {2**31} + cast({hashes[1]} as bigint) "
-            f"as __splink__u_hash_{side}"
+        # Salt each role separately from the record-sampling hash.
+        hash_expr = db_api.sql_dialect.hash_bucket_expression(
+            f"({uid_expr}) || '__splink_u_{seed}_{side}'", 2**31
         )
+        hash_columns.append(f"{hash_expr} as __splink__u_hash_{side}")
     sql = f"""
     select *, {", ".join(hash_columns)}
     from __splink__df_concat
@@ -511,7 +500,6 @@ def estimate_u_values(
             blocking_cols=blocking_cols,
             cv_cols=cv_cols,
             min_count_per_level=min_count_per_level,
-            pair_sampling_proportion=pair_sampling_proportion,
         )
 
         min_count_condition_met = False
