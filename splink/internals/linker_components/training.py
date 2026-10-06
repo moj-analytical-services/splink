@@ -172,8 +172,11 @@ class LinkerTraining:
         The u parameters estimate the proportion of record comparisons that fall
         into each comparison level amongst truly non-matching records.
 
-        This procedure takes a sample of the data and generates the cartesian
-        product of pairwise record comparisons amongst the sampled records.
+        This procedure samples records, targeting at least 10,000 records (per dataset
+        for link_only), or all available records if fewer. It then samples pairs across
+        both sides using hash joins, with optional early stopping per comparison.
+        Linked datasets use a common sampling rate, so larger inputs may contribute
+        more records.
         The validity of the u values rests on the assumption that the resultant
         pairwise comparisons are non-matches (or at least, they are very unlikely to be
         matches). For large datasets, this is typically true.
@@ -195,7 +198,8 @@ class LinkerTraining:
             min_count_per_level (int | None): Minimum number of u observations
                 required for each comparison level before stopping estimation early.
                 If None, disables early stopping (all chunks are processed).
-                Defaults to 100.
+                Defaults to 100. This is a sampling heuristic, not a guaranteed
+                precision target.
             num_chunks (int): Number of chunks to split the workload while estimating u.
                 If set to 1, disables the probe phase. Defaults to 10.
 
