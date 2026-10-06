@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Qualified Spark `DROP TABLE` with the configured catalog and database so intermediate Delta tables are removed when the session schema differs [#2747](https://github.com/moj-analytical-services/splink/issues/2747)
+
 ## [5.0.0] - 2026-09-28
 
 Major release - see our [blog](docs/blog/posts/2026-09-28-splink-5-release.md). Significant changes as follows. See also [comprehensive note of changes](https://gist.github.com/RobinL/c6d56a27d8f83c40b6b09643c0fa5d14).
