@@ -47,8 +47,24 @@ class ColumnExpression:
     def __init__(self, sql_expression: str, sql_dialect: SplinkDialect | None = None):
         self.raw_sql_expression = sql_expression
         self.operations: list[ColumnExpressionOperation] = []
-        if sql_dialect is not None:
-            self.sql_dialect: SplinkDialect = sql_dialect
+        self._sql_dialect = sql_dialect
+
+    @property
+    def sql_dialect(self) -> SplinkDialect:
+        if self._sql_dialect is None:
+            raise ValueError(
+                "This ColumnExpression does not have a SQL dialect set, so it "
+                "cannot generate any SQL. "
+                "The dialect is usually attached automatically when the "
+                "ColumnExpression is used in a comparison and passed to a Linker. "
+                "To use it directly, either pass `sql_dialect` when constructing "
+                "it, or assign one to its `sql_dialect` attribute."
+            )
+        return self._sql_dialect
+
+    @sql_dialect.setter
+    def sql_dialect(self, sql_dialect: SplinkDialect) -> None:
+        self._sql_dialect = sql_dialect
 
     def _clone(self) -> "ColumnExpression":
         clone = copy(self)
