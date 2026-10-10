@@ -3,6 +3,9 @@ import sqlite3
 import pyarrow as pa
 import pytest
 
+import splink.comparison_library as cl
+from splink import Linker, SettingsCreator, block_on
+from splink.internals.datasets import splink_dataset_labels
 from splink.internals.duckdb.database_api import DuckDBAPI
 from splink.internals.exceptions import SplinkException
 from splink.internals.misc import ensure_is_list
@@ -28,6 +31,36 @@ def generate_raw_profile_dataset(table, columns_to_profile, db_api):
     pipeline.enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
 
     return db_api.sql_pipeline_to_splink_dataframe(pipeline).as_record_list()
+
+
+@mark_with_dialects_including("duckdb")
+def test_accuracy_analysis_after_profile_columns(fake_1000):
+    # profile_columns() deletes Splink-created tables from the database; it must
+    # also invalidate the cache, otherwise a later step that reuses a cached
+    # term-frequency table queries a table that no longer exists (issue #3197).
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.ExactMatch("first_name").configure(term_frequency_adjustments=True),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
+        ],
+        blocking_rules_to_generate_predictions=[block_on("first_name")],
+    )
+    db_api = DuckDBAPI()
+    sdf = db_api.register(fake_1000)
+    linker = Linker(sdf, settings)
+    linker.training.estimate_parameters_using_expectation_maximisation(
+        block_on("first_name")
+    )
+
+    # This deletes the tables Splink created, including the cached tf tables
+    profile_columns(sdf, ["surname"])
+
+    # Reusing the cached term-frequency tables must not reference a table that
+    # profile_columns has deleted from the database.
+    sdf_labels = db_api.register(splink_dataset_labels.fake_1000_labels)
+    linker.evaluation.accuracy_analysis_from_labels_table(sdf_labels)
 
 
 @mark_with_dialects_including("duckdb")
