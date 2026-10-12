@@ -106,6 +106,30 @@ def test_estimate_without_term_frequencies(fake_1000):
             actual["probability_two_random_records_match"]
         )
 
+    actual_lambda_history = sorted(
+        [
+            record
+            for record in session_fast._iteration_history_records
+            if record.comparison_name == "probability_two_random_records_match"
+        ],
+        key=lambda record: record.iteration,
+    )
+    expected_lambda_history = sorted(
+        session_fast._lambda_history_records, key=lambda record: record["iteration"]
+    )
+
+    assert [record.iteration for record in actual_lambda_history] == [
+        record["iteration"] for record in expected_lambda_history
+    ]
+    actual_probabilities = [
+        record.probability_two_random_records_match for record in actual_lambda_history
+    ]
+    expected_probabilities = [
+        record["probability_two_random_records_match"]
+        for record in expected_lambda_history
+    ]
+    assert actual_probabilities == pytest.approx(expected_probabilities)
+
     actual_m_u_history = db_api_2.register(
         list(map(lambda r: r.as_dict(), session_fast._iteration_history_records))
     )

@@ -406,7 +406,9 @@ class EMTrainingSession:
             records = [
                 ModelParameterIterationDetailedRecord.from_settings_param_detailed_record(
                     r,
-                    probability_two_random_records_match=self.core_model_settings.probability_two_random_records_match,
+                    probability_two_random_records_match=(
+                        core_model_settings.probability_two_random_records_match
+                    ),
                     iteration=iteration,
                 )
                 for r in core_model_settings.parameters_as_detailed_records
