@@ -42,6 +42,31 @@ def count_agreement_patterns_sql(comparisons: List[Comparison]) -> str:
     return sql
 
 
+def can_precompute_tf_adjustments(
+    estimate_without_term_frequencies: bool,
+    training_fixed_probabilities: set[str],
+    comparisons: List[Comparison],
+) -> bool:
+    return (
+        not estimate_without_term_frequencies
+        and "u" in training_fixed_probabilities
+        and any(cc._has_tf_adjustments for cc in comparisons)
+    )
+
+
+def precompute_tf_adjustments_sql(comparisons: List[Comparison]) -> str:
+    select_cols = [cc._gamma_column_name for cc in comparisons]
+    select_cols.extend(
+        cc._tf_adjustment_sql for cc in comparisons if cc._has_tf_adjustments
+    )
+    select_cols_expr = ",\n".join(indent_sql(col) for col in select_cols)
+    return f"""
+    select
+{select_cols_expr}
+    from __splink__df_comparison_vectors
+    """
+
+
 def compute_new_parameters_sql(
     estimate_without_term_frequencies: bool, comparisons: List[Comparison]
 ) -> str:
@@ -230,12 +255,15 @@ def expectation_maximisation(
     unique_id_input_columns: List[InputColumn],
     training_fixed_probabilities: set[str],
     df_comparison_vector_values: SplinkDataFrame,
+    precomputed_tf_adjustments: bool = False,
 ) -> List[CoreModelSettings]:
     """In the expectation step, we use the current model parameters to estimate
     the probability of match for each pairwise record comparison
 
     In the maximisation step, we use these predicted probabilities to re-compute
     the parameters of the model
+
+    The supplied comparison table is owned by the caller.
     """
     # initial values of parameters
     core_model_settings_history = [core_model_settings.copy()]
@@ -270,6 +298,7 @@ def expectation_maximisation(
                 core_model_settings=core_model_settings,
                 sql_dialect=db_api.sql_dialect,
                 training_mode=True,
+                use_precomputed_tf_training_table=precomputed_tf_adjustments,
             )
 
         for sql_info in sqls:

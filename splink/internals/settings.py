@@ -420,24 +420,29 @@ class Settings:
         retain_matching_columns: bool,
         retain_intermediate_calculation_columns: bool,
         additional_columns_to_retain: List[InputColumn],
+        precomputed_tf_adjustments: bool = False,
+        retain_record_identifiers: bool = True,
     ) -> List[str]:
         cols = []
 
-        for uid_col in unique_id_input_columns:
-            cols.extend(uid_col.names_l_r)
+        if retain_record_identifiers:
+            for uid_col in unique_id_input_columns:
+                cols.extend(uid_col.names_l_r)
 
         for cc in comparisons:
             cols.extend(
                 cc._columns_to_select_for_match_weight_parts(
                     retain_matching_columns,
                     retain_intermediate_calculation_columns,
+                    precomputed_tf_adjustments=precomputed_tf_adjustments,
                 )
             )
 
         for add_col in additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
 
-        cols.append("match_key")
+        if retain_record_identifiers:
+            cols.append("match_key")
 
         cols = dedupe_preserving_order(cols)
         return cols
@@ -450,12 +455,14 @@ class Settings:
         retain_intermediate_calculation_columns: bool,
         training_mode: bool,
         additional_columns_to_retain: List[InputColumn],
+        retain_record_identifiers: bool = True,
     ) -> List[str]:
         cols = []
 
-        for uid_col in unique_id_input_columns:
-            cols.append(uid_col.name_l)
-            cols.append(uid_col.name_r)
+        if retain_record_identifiers:
+            for uid_col in unique_id_input_columns:
+                cols.append(uid_col.name_l)
+                cols.append(uid_col.name_r)
 
         for cc in comparisons:
             cols.extend(
@@ -469,7 +476,8 @@ class Settings:
         for add_col in additional_columns_to_retain:
             cols.extend(add_col.names_l_r)
 
-        cols.append("match_key")
+        if retain_record_identifiers:
+            cols.append("match_key")
 
         cols = dedupe_preserving_order(cols)
         return cols
