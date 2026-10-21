@@ -8,7 +8,7 @@
       "encoding": {
         "x": {
           "type": "quantitative",
-          "axis": {"format": "+", "title": "Threshold match weight"},
+          "axis": {"format": "+f", "title": "Threshold match weight"},
           "field": "match_weight"
         },
         "y": {
@@ -33,7 +33,7 @@
         },
         "x": {
           "type": "quantitative",
-          "axis": {"title": "Threshold match weight"},
+          "axis": {"format": "+f", "title": "Threshold match weight"},
           "field": "match_weight"
         },
         "y": {
