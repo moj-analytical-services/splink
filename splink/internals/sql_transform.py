@@ -20,7 +20,7 @@ def _add_l_or_r_to_identifier(node: exp.Expression) -> exp.Expression:
         # node is the `x` in the lambda `x -> list_contains(r.name_list, x))`
         parent_table = ""
     else:
-        parent_table = p.table  # type: ignore [attr-defined]
+        parent_table = p.table  # type: ignore [attr-defined]  # ty: ignore[unresolved-attribute]
 
     if parent_table != "":
         l_r = "_" + parent_table
