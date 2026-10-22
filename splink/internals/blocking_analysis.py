@@ -757,6 +757,17 @@ def n_largest_blocks(
         blocking_rule, db_api.sql_dialect.sql_dialect_str
     )
 
+    join_conditions = blocking_rule_as_br._equi_join_conditions
+    if not join_conditions:
+        raise ValueError(
+            f"Blocking rule {blocking_rule_as_br.blocking_rule_sql!r} has no "
+            "equi-join conditions, so it does not partition records into "
+            "discrete blocks and cannot be analysed by n_largest_blocks. This "
+            "happens for rules composed only of filter conditions (e.g. fuzzy "
+            "conditions like levenshtein) or rules combined with OR. Analyse "
+            "the equi-join parts individually instead."
+        )
+
     splink_df_dict = splink_dataframes_to_dict(splink_dataframe_or_dataframes)
 
     sqls = _count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
@@ -764,8 +775,6 @@ def n_largest_blocks(
     )
     pipeline = CTEPipeline()
     pipeline.enqueue_list_of_sqls(sqls)
-
-    join_conditions = blocking_rule_as_br._equi_join_conditions
 
     keys = ", ".join(f"key_{i}" for i in range(len(join_conditions)))
     sql = f"""

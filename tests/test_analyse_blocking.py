@@ -769,6 +769,43 @@ def test_n_largest_blocks(test_helpers, dialect):
     )
 
 
+def test_n_largest_blocks_raises_for_no_equi_join_rule():
+    """n_largest_blocks cannot analyse a rule with no equi-join conditions,
+    e.g. pure filter rules or an OR of two rules - these don't partition
+    records into discrete blocks, so there is no "key" to group by. Before
+    this raised a cryptic SplinkException wrapping a raw SQL parser error
+    (empty `select` / `using ()`) instead of a clear message."""
+    data = [
+        {"unique_id": 1, "name1": "john"},
+        {"unique_id": 2, "name1": "jon"},
+        {"unique_id": 3, "name1": "smith"},
+    ]
+
+    db_api = DuckDBAPI()
+    sdf = db_api.register(data)
+    filter_only_rule = CustomRule(
+        "levenshtein(l.name1, r.name1) <= 1", sql_dialect="duckdb"
+    )
+    with pytest.raises(ValueError, match="no equi-join conditions"):
+        n_largest_blocks(
+            sdf, blocking_rule=filter_only_rule, link_type="dedupe_only"
+        )
+
+    db_api_2 = DuckDBAPI()
+    sdf_2 = db_api_2.register(data)
+    or_rule = Or(block_on("name1"), block_on("name1"))
+    with pytest.raises(ValueError, match="no equi-join conditions"):
+        n_largest_blocks(sdf_2, blocking_rule=or_rule, link_type="dedupe_only")
+
+    # an ordinary equi-join rule must still work fine
+    db_api_3 = DuckDBAPI()
+    sdf_3 = db_api_3.register(data)
+    result = n_largest_blocks(
+        sdf_3, blocking_rule=block_on("name1"), link_type="dedupe_only"
+    )
+    assert len(result.as_record_list()) == 3
+
+
 def test_blocking_rule_parentheses_equivalence():
     """Test that different blocking rule formats produce identical results
     (issue #2501)"""
