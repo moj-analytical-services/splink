@@ -163,6 +163,8 @@ class CoreModelSettings:
             u_probability=None,
             m_probability_description=None,
             u_probability_description=None,
+            m_is_trained=True,
+            u_is_trained=True,
             has_tf_adjustments=False,
             tf_adjustment_column=None,
             tf_adjustment_weight=None,
