@@ -58,13 +58,13 @@ Once uv is installed, Python can be installed using uv, as outlined in [the uv p
 The instructions to install Java globally depend on your operating system.
 Generally, some version of Java will be available from your operating system's
 package manager.
-Note that you must install a version of Java **earlier than Java 18** because
-Splink currently uses an older version of Spark.
+Note that the development environment uses Spark 4 by default, which requires
+**Java 17 or 21**. Java 17 also works with Spark 3, so it is the safest choice.
 
 As an example, you could run this on Ubuntu:
 
 ```sh
-sudo apt install openjdk-11-jre-headless
+sudo apt install openjdk-17-jre-headless
 ```
 
 ### PostgreSQL (optional)

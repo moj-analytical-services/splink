@@ -10,11 +10,11 @@ Spark supports [UDFs written in Scala and Java](https://spark.apache.org/docs/la
 
 Splink currently uses UDFs written in Scala and are implemented as follows:
 
--  The UDFs are created in a separate repository, [`splink_scalaudfs`](https://github.com/moj-analytical-services/splink_scalaudfs), with the Scala functions being defined in [`Similarity.scala`](https://github.com/moj-analytical-services/splink_scalaudfs/blob/main/src/main/scala/uk/gov/moj/dash/linkage/Similarity.scala).
+-  The UDFs are created in a separate repository, [`splink_scalaudfs`](https://github.com/ADBond/splink_scalaudfs), with the Scala functions being defined in [`Similarity.scala`](https://github.com/ADBond/splink_scalaudfs/blob/main/src/main/scala/uk/gov/moj/dash/linkage/Similarity.scala).
 - The functions are then stored in a Java Archive (JAR) file - for more on JAR files, see the [Java documentation](https://docs.oracle.com/javase/8/docs/technotes/guides/jar/jarGuide.html).
-- Once the JAR file containing the UDFs has been created, it is copied across to the [spark_jars folder](https://github.com/moj-analytical-services/splink/tree/master/splink/files/spark_jars) in Splink.
-- Specify the the correct [jar location](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/jar_location.py) within Splink.
-- UDFS are then [registered within the Spark Linker](https://github.com/moj-analytical-services/splink/blob/879a34a6f8e548f14733924092f0c773d6f93f72/splink/spark/spark_linker.py#L246).
+- Once the JAR file containing the UDFs has been created, it is copied across to the [spark_jars folder](https://github.com/moj-analytical-services/splink/tree/master/splink/internals/files/spark_jars) in Splink.
+- Specify the the correct [jar location](https://github.com/moj-analytical-services/splink/blob/master/splink/internals/spark/jar_location.py) within Splink.
+- UDFS are then [registered by the `SparkAPI`](https://github.com/moj-analytical-services/splink/blob/master/splink/internals/spark/database_api.py).
 
 Now the Spark UDFs have been successfully registered, they can be used in Spark SQL. For example,
 
