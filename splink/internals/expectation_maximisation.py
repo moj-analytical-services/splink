@@ -250,6 +250,7 @@ def expectation_maximisation(
         pipeline.enqueue_sql(sql, "__splink__agreement_pattern_counts")
         agreement_pattern_counts = db_api.sql_pipeline_to_splink_dataframe(pipeline)
 
+    converged = False
     for i in range(1, max_iterations + 1):
         pipeline = CTEPipeline()
         probability_two_random_records_match = (
@@ -305,9 +306,19 @@ def expectation_maximisation(
         logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
         if max_change_dict["max_abs_change_value"] < em_convergence:
+            converged = True
             break
 
-    logger.info(f"\nEM converged after {i} iterations")
+    if converged:
+        logger.info(f"\nEM converged after {i} iterations")
+    else:
+        logger.warning(
+            f"\nEM did not converge: reached the maximum of {max_iterations} "
+            "iterations without the largest change in parameters dropping below "
+            f"the convergence threshold ({em_convergence}). The model parameters "
+            "may not be reliable; consider increasing `max_iterations` or "
+            "`em_convergence` in the training settings."
+        )
     return core_model_settings_history
 
 
