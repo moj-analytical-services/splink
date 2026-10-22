@@ -150,6 +150,7 @@ def cluster_pairwise_predictions_at_threshold(
         edge_id_column_name_right=edge_id_column_name_right,
         db_api=db_api,
         threshold_match_probability=threshold_match_probability,
+        threshold_match_weight=threshold_match_weight,
     )
     cc.metadata["threshold_match_probability"] = threshold_match_probability
     return cc
