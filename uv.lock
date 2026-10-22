@@ -2335,15 +2335,15 @@ wheels = [
 
 [[package]]
 name = "pymdown-extensions"
-version = "12.0"
+version = "12.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
     { name = "pyyaml", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f0/20/bb1b39c1f487e6745bfdca09625db8e8265cdce70d2bac679d930a6cbf72/pymdown_extensions-12.0.tar.gz", hash = "sha256:d00b32be02715676bfec9183371928d1db44e1cd58dbeb76c7f27d9f72682039", size = 867035, upload-time = "2026-09-15T03:32:18.85Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/fe/ac50ee24a80a1b344e643f6fb626063cc7041b978cd1dd9a7f9963ae1cd1/pymdown_extensions-12.3.tar.gz", hash = "sha256:a7f2a4e0bc60c6e6babfa7922cfb3b01cd640eb00fb208f3c582e12bae00ea67", size = 870532, upload-time = "2026-10-14T22:40:43.252Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/52/8c/18eb38daca41f784dd06edc2ef95a75d7c7572e4105f486a5b2cd613081b/pymdown_extensions-12.0-py3-none-any.whl", hash = "sha256:ae9ee9bfd1c1e3d291d6f6ff1883a7ef388594905e80c0c714b9c596fd8a5cb7", size = 277140, upload-time = "2026-09-15T03:32:17.487Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/d0/758afe732c2da502c051b4d03ff88daa3c0fc1a1e671e6c5a6318177bab4/pymdown_extensions-12.3-py3-none-any.whl", hash = "sha256:345493a8e3497e24382902903a1c43a28e34a52f2b7571a1c9641429b820ca74", size = 277597, upload-time = "2026-10-14T22:40:41.543Z" },
 ]
 
 [[package]]
