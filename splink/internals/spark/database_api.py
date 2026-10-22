@@ -134,6 +134,11 @@ class SparkAPI(DatabaseAPI[spark_df]):
         return self.spark.sql(final_sql)
 
     def delete_table_from_database(self, name):
+        # Same identifier saveAsTable uses for delta_lake_table. An unqualified
+        # name resolves in the session schema and misses that table.
+        store_prefix = f"{self.splink_data_store}."
+        if not name.startswith(store_prefix):
+            name = f"{store_prefix}{name}"
         self._execute_sql_against_backend(f"drop table if exists {name}")
 
     def _clean_pandas_df(self, df):
@@ -333,7 +338,9 @@ class SparkAPI(DatabaseAPI[spark_df]):
             elif self.break_lineage_method == "delta_lake_table":
                 write_path = f"{self.splink_data_store}.{physical_name}"
                 spark_df.write.mode("overwrite").saveAsTable(write_path)
-                spark_df = self.spark.table(write_path)
+                # Temp views are registered from this frame and outlive the
+                # catalog drop, so they must not keep scanning its files.
+                spark_df = self.spark.table(write_path).localCheckpoint()
                 logger.debug(
                     f"Wrote {templated_name} to Delta Table at "
                     f"{self.splink_data_store}.{physical_name}"
