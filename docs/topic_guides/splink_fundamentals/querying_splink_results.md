@@ -83,24 +83,18 @@ df_predict.to_csv("splink_predictions.csv", overwrite=True)
 ### Creating a `SplinkDataFrame`
 
 
-You can  create a `SplinkDataFrame` for any table in your database. You will need to already have a `linker` to manage interactions with the database:
+You can create a `SplinkDataFrame` for any table in your database using `db_api.register`; a `Linker` is not required:
+
 ```python
 import duckdb
 import pyarrow as pa
-
-from splink import Linker, SettingsCreator, DuckDBAPI
-from splink.datasets import splink_datasets
+from splink import DuckDBAPI
 
 con = duckdb.connect()
 arrow_numbers = pa.Table.from_pydict({"id": [1, 2, 3], "number": ["one", "two", "three"]})
 con.sql("CREATE TABLE number_table AS SELECT * FROM arrow_numbers")
 
 db_api = DuckDBAPI(connection=con)
-df = db_api.register(splink_datasets.fake_1000, dataset_display_name="fake_1000")
-
-linker = Linker(df, settings=SettingsCreator(link_type="dedupe_only"))
-splink_df = linker.table_management.register_table("number_table", "a_templated_name")
-splink_df.as_pandas_dataframe()
+splink_df = db_api.register("number_table")
+splink_df.as_record_list()
 ```
-```
-

@@ -148,7 +148,7 @@ A list specifying how records should be compared for probabilistic matching.  Ea
     [{
         "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL",
         "label_for_charts": "null",
-        "null_level": True
+        "is_null_level": true
     },
     {
         "sql_condition": "first_name_l = first_name_r",
@@ -167,9 +167,9 @@ A list specifying how records should be compared for probabilistic matching.  Ea
 
         #### `sql_condition`
 
-        A branch of a SQL case expression without WHEN and THEN e.g. `jaro_winkler_sim(surname_l, surname_r) > 0.88`
+        A branch of a SQL case expression without WHEN and THEN e.g. `jaro_winkler_similarity(surname_l, surname_r) > 0.88`
 
-        **Examples**: `['forename_l = forename_r', 'jaro_winkler_sim(surname_l, surname_r) > 0.88']`
+        **Examples**: `['forename_l = forename_r', 'jaro_winkler_similarity(surname_l, surname_r) > 0.88']`
 
         <hr>
 
@@ -272,13 +272,13 @@ By default, Splink drops columns which are not used by any comparisons.  This gi
 
 <hr>
 
-## `bayes_factor_column_prefix`
+## `match_weight_column_prefix`
 
-The prefix to use for the columns that will be created to store the Bayes factors
+The prefix for columns containing partial match weights.
 
-**Default value**: `bf_`
+**Default value**: `mw_`
 
-**Examples**: `['bf_', '__bf__']`
+**Examples**: `['mw_', '__mw__']`
 
 <hr>
 
@@ -304,10 +304,8 @@ The prefix to use for the columns that will be created to store the comparison v
 
 ## `sql_dialect`
 
-The SQL dialect in which `sql_conditions` are written.  Must be a valid SQLGlot dialect
+The SQL dialect is determined by the database API used to register your data and recorded in saved models. It is not an argument to `SettingsCreator`.
 
-**Default value**: `None`
-
-**Examples**: `['spark', 'duckdb', 'presto', 'sqlite']`
+**Examples in saved models**: `['spark', 'duckdb', 'postgres', 'sqlite']`
 
 <hr>

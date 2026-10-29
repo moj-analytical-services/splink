@@ -135,6 +135,7 @@ exclude_docs: |
   !**/*.html
   !**/*.css
   !**/*.js
+  **/.venv/**
 
 markdown_extensions:
   # add id/style etc to markdown elements - see getting started button in docs/index.md
@@ -290,6 +291,7 @@ nav:
           - Optimising Spark performance: "topic_guides/performance/optimising_spark.md"
       - DuckDB Performance:
           - Optimising DuckDB performance: "topic_guides/performance/optimising_duckdb.md"
+          - "A reproducible DuckDB benchmark: one billion records": "topic_guides/performance/duckdb_performance_reprex.md"
     - Charts Gallery:
       - "charts/index.md"
       - Exploratory Analysis:

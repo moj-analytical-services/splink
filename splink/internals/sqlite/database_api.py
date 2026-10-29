@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import math
 import sqlite3
 from typing import TYPE_CHECKING, Union
@@ -34,11 +35,11 @@ class SQLiteAPI(DatabaseAPI[sqlite3.Cursor]):
         self.con.create_function("pow", 2, pow)
         self.con.create_function("power", 2, pow)
 
-        # Register hash function for chunking
-        # Python's hash() can return negative values, so we use abs()
-        # and convert to ensure consistent behavior
+        # Python's hash() varies by process. Keep chunk assignments stable and the
+        # result within SQLite's signed 64-bit integer range.
         def splink_hash(s):
-            return abs(hash(str(s)))
+            digest = hashlib.sha256(str(s).encode("utf-8")).digest()
+            return int.from_bytes(digest[:8], "big") & ((1 << 63) - 1)
 
         self.con.create_function("splink_hash", 1, splink_hash)
 

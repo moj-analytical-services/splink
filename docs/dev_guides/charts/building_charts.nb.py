@@ -57,7 +57,9 @@ for rule in [block_on("first_name"), block_on("dob")]:
 
 # %%
 # Take linker object and extract complete settings dict
-records = linker._settings_obj._parameters_as_detailed_records
+from dataclasses import asdict
+
+records = [asdict(record) for record in linker._settings_obj._parameters_as_detailed_records]
 
 cols_to_keep = [
     "comparison_name",

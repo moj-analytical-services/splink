@@ -13,40 +13,40 @@
 # ---
 
 # %% tags=["hide_input", "hide_output"]
-import urllib.request
+from io import StringIO
 
 import pandas as pd
-import json
-pd.options.display.max_colwidth = 10009
 
-url = (
-    "https://raw.githubusercontent.com/moj-analytical-services/splink_speed_testing/"
-    "39e235d2452793fd59a11da4a813642013404ed0/.benchmarks/Darwin-CPython-3.11-64bit/"
-    "0006_b5b7ee569dab10ff304d1123984a2f446917fe9e_20241205_124128.json"
-)
-with urllib.request.urlopen(url) as u:
-    data_text = u.read().decode()
-
-data = json.loads(data_text)
-# Extract the benchmark statistics
-benchmarks = data['benchmarks']
-
-# Create a DataFrame from the benchmark statistics
-df = pd.DataFrame([{
-    'name': benchmark['name'],
-    'rounds': benchmark['stats']['rounds'],
-    'median': benchmark['stats']['median'],
-
-    'iterations': benchmark['stats']['iterations']
-} for benchmark in benchmarks])
-
-df['comparison_type'] = df['name'].str.extract(r'\[(.*?)-(?:duckdb|spark)\]')[0]
-df['backend'] = df['name'].str.extract(r'-(duckdb|spark)\]')[0]
-
-
-df['name'] = df['name'].str.replace(r'test_comparison_execution_\w+\[.*?\]', '', regex=True)
-
-df = df.drop('name', axis=1)
+# Original December 2024 measurements, preserved from this notebook's chart outputs.
+# Keeping the small dataset here avoids relying on the unavailable benchmark download.
+df = pd.read_csv(StringIO("""
+comparison_type,backend,rounds,median
+Exact Match,duckdb,5,0.021056458999737515
+Cosine Similarity Level*,duckdb,5,0.02219412500016915
+Absolute Date Difference Level (date),duckdb,5,0.024377040999752353
+Jaccard Level,duckdb,5,0.060411000000385684
+Distance In KM Level,duckdb,5,0.11403295899981458
+Jaro Level,duckdb,5,0.1533886249999341
+Jaro-Winkler Level,duckdb,5,0.15666545900057827
+Absolute Date Difference Level (string),duckdb,5,0.29996850000134145
+Levenshtein Level,duckdb,5,0.6126142920002167
+Array Subset Level,duckdb,5,0.6153485419999924
+Array Intersect Level,duckdb,5,0.6402568749999773
+Raw SQL Token Frequency Product,duckdb,5,0.6663422500005254
+SQL Levenshtein for all pairs in array,duckdb,5,2.774612832999992
+Damerau-Levenshtein Level,duckdb,5,4.7111222080002335
+Exact Match,spark,5,0.13899920900075813
+Absolute Date Difference Level (date),spark,5,0.161567749999449
+Array Subset Level,spark,5,0.4531747080000059
+Array Intersect Level,spark,5,0.4993427919998794
+Distance In KM Level,spark,5,0.5383288749999338
+Jaro-Winkler Level,spark,5,0.804795791998913
+Levenshtein Level,spark,5,1.220977999999377
+Jaccard Level,spark,5,1.479715290999593
+Absolute Date Difference Level (string),spark,5,1.6129342909989646
+Jaro Level,spark,5,2.331908291998843
+Damerau-Levenshtein Level,spark,5,14.258774750000157
+"""))
 
 # Get exact match times for each backend
 exact_match_times = df[df['comparison_type'] == 'Exact Match'].set_index('backend')['median']
@@ -56,13 +56,6 @@ df['multiple_of_exact_match'] = df.apply(
     lambda x: x['median'] / exact_match_times[x['backend']],
     axis=1
 )
-
-df['comparison_type'] = df['comparison_type'].apply(
-    lambda x: f"{x}*" if x == 'Cosine Similarity Level' else x
-)
-
-
-
 
 # %% tags=["hide_input", "hide_output"]
 import altair as alt

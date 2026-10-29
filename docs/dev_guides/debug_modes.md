@@ -48,14 +48,17 @@ control their own logging setup.
 
 ```python
 import logging
+from splink import DuckDBAPI, Linker
 
-linker = Linker(df, settings, log_level=logging.DEBUG)
+db_api = DuckDBAPI()
+sdf = db_api.register(df)
+linker = Linker(sdf, settings, log_level=logging.DEBUG)
 ```
 
 Pass `log_level=None` if you do not want Splink to configure logging:
 
 ```python
-linker = Linker(df, settings, log_level=None)
+linker = Linker(sdf, settings, log_level=None)
 ```
 
 #### Configure outside linker construction
@@ -66,7 +69,7 @@ import splink.logging
 
 splink.logging.enable(logging.INFO)
 
-linker = Linker(df, settings)
+linker = Linker(sdf, settings, log_level=None)
 ```
 
 #### Use application logging
@@ -80,5 +83,5 @@ import logging
 logging.basicConfig(format="%(message)s")
 logging.getLogger("splink").setLevel(logging.INFO)
 
-linker = Linker(df, settings)
+linker = Linker(sdf, settings, log_level=None)
 ```

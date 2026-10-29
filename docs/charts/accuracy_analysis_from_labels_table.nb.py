@@ -18,7 +18,9 @@
 #
 
 # %% tags=["hide_input"]
-# chart TODO: display artifact
+from IPython.display import display, update_display
+
+_ = display("", display_id="gallery_chart")
 
 # %% [markdown]
 # !!! info "At a glance"
@@ -112,6 +114,10 @@ labels_table = linker.table_management.register_labels_table(df_labels_sdf)
 chart = linker.evaluation.accuracy_analysis_from_labels_table(
     labels_table, output_type="accuracy", add_metrics=["f1"]
 )
+
+# %% tags=["hide_input"]
+update_display(chart, display_id="gallery_chart")
+
 
 # %% [markdown]
 # Note that you can also produce a ROC chart, a precision recall chart, or get the results as a table:

@@ -57,12 +57,19 @@ def _estimate_u_comparison_vector_sqls(
     where_condition = _sql_gen_where_condition(
         link_type,
         unique_id_columns,
-        right_chunk=(rhs_chunk_num, rhs_num_chunks),
-        sql_dialect=db_api.sql_dialect,
     )
 
     uid_l_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "l")
     uid_r_expr = _composite_unique_id_from_nodes_sql(unique_id_columns, "r")
+
+    # An equijoin samples pairs across both inputs without a Cartesian product.
+    # Different offsets select disjoint pairs, including when records are reused.
+    num_buckets = rhs_num_chunks
+    join_condition = (
+        f"l.__splink__u_hash_l % {num_buckets} = "
+        f"(r.__splink__u_hash_r % {num_buckets} + {rhs_chunk_num - 1}) "
+        f"% {num_buckets}"
+    )
 
     blocked_cols_expr = ",\n".join(
         indent_sql(col)
@@ -79,7 +86,7 @@ def _estimate_u_comparison_vector_sqls(
     from {input_tablename_l} as l
     inner join {input_tablename_r} as r
     on
-    (1=1)
+    {join_condition}
     {where_condition}
     """
 
@@ -410,8 +417,16 @@ def estimate_u_values(
     sample_filter = training_linker._proportion_sample_sql(
         proportion, uid_cols, seed=seed
     )
+    uid_expr = _composite_unique_id_from_nodes_sql(uid_cols)
+    hash_columns = []
+    for side in ("l", "r"):
+        # Salt each role separately from the record-sampling hash.
+        hash_expr = db_api.sql_dialect.hash_bucket_expression(
+            f"({uid_expr}) || '__splink_u_{seed}_{side}'", 2**31
+        )
+        hash_columns.append(f"{hash_expr} as __splink__u_hash_{side}")
     sql = f"""
-    select *
+    select *, {", ".join(hash_columns)}
     from __splink__df_concat
     where 1=1
     {sample_filter}
@@ -437,9 +452,7 @@ def estimate_u_values(
         input_tablename_sample_l = "__splink__df_concat_sample_left"
         input_tablename_sample_r = "__splink__df_concat_sample_right"
 
-    # At this point we've computed our data sample and we're ready to 'block and count'
-
-    # Only chunk on RHS.  Input data is sample and thus always small enough.
+    # Chunk pairs across both sides of the record sample, rather than slicing RHS.
     rhs_num_chunks = num_chunks
 
     uid_columns = settings_obj.column_info_settings.unique_id_input_columns
@@ -470,7 +483,7 @@ def estimate_u_values(
             additional_columns_to_retain=[],
         )
 
-        use_probe = rhs_num_chunks > 1
+        use_probe = rhs_num_chunks > 1 and min_count_per_level is not None
 
         # Bind invariant args once to avoid repetition
         run_chunk = partial(

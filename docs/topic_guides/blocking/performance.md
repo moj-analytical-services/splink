@@ -90,7 +90,10 @@ In most SQL engines, an `OR` condition within a blocking rule will result in all
 Instead of the `OR` condition being included in the blocking rule, instead, provide two blocking rules to Splink.  This will achieve the desired outcome of generating all comparisons where either the first name or surname match.
 
 ```py
+from splink import SettingsCreator, block_on
+
 SettingsCreator(
+    link_type="dedupe_only",
     blocking_rules_to_generate_predictions=[
         block_on("first_name"),
         block_on("surname")

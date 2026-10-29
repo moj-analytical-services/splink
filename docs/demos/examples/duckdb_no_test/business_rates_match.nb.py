@@ -14,10 +14,10 @@
 
 # %% tags=["hide_input"]
 # Uncomment and run this cell if you're running in Google Colab.
-# # !pip install splink
+# # !pip install "splink[altair,igraph,pyarrow]"
 
 # %% [markdown]
-# <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/master/docs/demos/examples/duckdb_no_test/business_rates_match.ipynb">
+# <a target="_blank" href="https://colab.research.google.com/github/moj-analytical-services/splink/blob/ipynbs/docs/demos/examples/duckdb_no_test/business_rates_match.ipynb">
 #   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 # </a>
 

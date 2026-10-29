@@ -16,7 +16,9 @@
 # # `parameter_estimate_comparisons_chart`
 
 # %% tags=["hide_input"]
-# chart TODO: display artifact
+from IPython.display import display, update_display
+
+_ = display("", display_id="gallery_chart")
 
 # %% [markdown]
 #
@@ -95,6 +97,10 @@ linker.training.estimate_parameters_using_expectation_maximisation(
 
 chart = linker.visualisations.parameter_estimate_comparisons_chart()
 chart
+
+
+# %% tags=["hide_input"]
+update_display(chart, display_id="gallery_chart")
 
 
 # %%

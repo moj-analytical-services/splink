@@ -17,7 +17,9 @@
 #
 
 # %% tags=["hide_input"]
-# chart TODO: display artifact
+from IPython.display import display, update_display
+
+_ = display("", display_id="gallery_chart")
 
 # %% [markdown]
 #
@@ -116,4 +118,8 @@ chart = linker.evaluation.accuracy_analysis_from_labels_table(
     labels_table, output_type="threshold_selection", add_metrics=["f1"]
 )
 chart
+
+
+# %% tags=["hide_input"]
+update_display(chart, display_id="gallery_chart")
 

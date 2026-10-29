@@ -74,10 +74,10 @@ or if you need to clear cache items (e.g. if datasets were to be updated, or if 
 
 For example:
 ```py
-from splink.datasets import splink_dataset_utils
+from splink.internals.datasets import splink_dataset_utils
 
 splink_dataset_utils.show_downloaded_data()
-splink_dataset_utils.clear_cache(['fake_1000'])
+splink_dataset_utils.clear_downloaded_data(["fake_1000"])
 ```
 
 ::: splink.internals.datasets.utils.SplinkDataUtils
