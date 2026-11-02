@@ -67,6 +67,13 @@ class SparkDataFrame(SplinkDataFrame):
         return spark_df.toArrow()
 
     def _drop_table_from_database(self, force_non_splink_table=False):
+        if self.templated_name == "__splink__df_comparison_vectors_with_tf":
+            # Release the session-local EM cache before the next training call.
+            self._check_drop_table_created_by_splink(force_non_splink_table)
+            self.as_spark_dataframe().unpersist()
+            if self.db_api.break_lineage_method != "delta_lake_table":
+                self.db_api.spark.catalog.dropTempView(self.physical_name)
+                return
         if self.db_api.break_lineage_method == "delta_lake_table":
             self._check_drop_table_created_by_splink(force_non_splink_table)
             self.db_api.delete_table_from_database(self.physical_name)
