@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10.0, <4.0.0"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -40,7 +40,7 @@ dependencies = [
     { name = "jsonschema" },
     { name = "narwhals" },
     { name = "packaging" },
-    { name = "typing-extensions", marker = "python_full_version < '3.15' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.15'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/06/a1/5e6cc638a66da48cfc89a79c2f4810dfec00b63385f9b009ab1f069779bb/altair-6.2.2.tar.gz", hash = "sha256:a1ff9d9cfe81c75414641826312b9471780e19d39293ba0b012933f6b6cba0fe", size = 766606, upload-time = "2026-06-23T12:47:13.384Z" }
 wheels = [
@@ -52,7 +52,7 @@ name = "anyio"
 version = "4.14.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "idna", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "idna" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/61/cc/a381afa6efea9f496eff839d4a6a1aed3bfafc7b3ab4b0d1b243a12573dd/anyio-4.14.2.tar.gz", hash = "sha256:cfa139f3ed1a23ee8f88a145ddb5ac7605b8bbfd8592baacd7ce3d8bb4313c7f", size = 260176, upload-time = "2026-07-12T20:29:07.082Z" }
 wheels = [
@@ -135,8 +135,8 @@ name = "beautifulsoup4"
 version = "4.14.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "soupsieve", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "typing-extensions", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "soupsieve" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c3/b0/1c6a16426d389813b48d95e26898aff79abbde42ad353958ad95cc8c9b21/beautifulsoup4-4.14.3.tar.gz", hash = "sha256:6292b1c5186d356bba669ef9f7f051757099565ad9ada5dd630bd9de5fa7fb86", size = 627737, upload-time = "2025-11-30T15:08:26.084Z" }
 wheels = [
@@ -148,7 +148,7 @@ name = "bleach"
 version = "6.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "webencodings", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "webencodings" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/48/3c/e12ac860709702bd5ebeb9b56a4fe334f1001246ee1b8f2b7ee28912df7d/bleach-6.4.0.tar.gz", hash = "sha256:4202482733d85cedd04e59fcb2f89f4e4c7c385a78d3c3c23c30446843a37452", size = 204857, upload-time = "2026-06-05T13:01:13.734Z" }
 wheels = [
@@ -157,7 +157,7 @@ wheels = [
 
 [package.optional-dependencies]
 css = [
-    { name = "tinycss2", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "tinycss2" },
 ]
 
 [[package]]
@@ -165,8 +165,8 @@ name = "cachecontrol"
 version = "0.14.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "msgpack", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "requests", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "msgpack" },
+    { name = "requests" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2d/f6/c972b32d80760fb79d6b9eeb0b3010a46b89c0b23cf6329417ff7886cd22/cachecontrol-0.14.4.tar.gz", hash = "sha256:e6220afafa4c22a47dd0badb319f84475d79108100d04e26e8542ef7d3ab05a1", size = 16150, upload-time = "2025-11-14T04:32:13.138Z" }
 wheels = [
@@ -175,7 +175,7 @@ wheels = [
 
 [package.optional-dependencies]
 filecache = [
-    { name = "filelock", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "filelock" },
 ]
 
 [[package]]
@@ -192,7 +192,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "(python_full_version >= '3.13' and implementation_name != 'PyPy') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing') or (implementation_name == 'PyPy' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (implementation_name == 'PyPy' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "pycparser" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -379,7 +379,7 @@ name = "click"
 version = "8.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "(python_full_version >= '3.13' and sys_platform == 'win32') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing') or (sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9b/98/518d8e5081007684232226f475082b30087d0f585e8457db087298259f49/click-8.4.1.tar.gz", hash = "sha256:918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96", size = 353007, upload-time = "2026-05-22T04:08:37.769Z" }
 wheels = [
@@ -510,7 +510,7 @@ wheels = [
 
 [package.optional-dependencies]
 toml = [
-    { name = "tomli", marker = "python_full_version <= '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "tomli", marker = "python_full_version <= '3.11'" },
 ]
 
 [[package]]
@@ -578,9 +578,9 @@ name = "essentials-openapi"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "essentials", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markupsafe", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyyaml", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "essentials" },
+    { name = "markupsafe" },
+    { name = "pyyaml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/d6/e1ddfdd454011e05d2c73f0f21b1ad6e1a8e125a36048f855a2374c4d46a/essentials_openapi-1.4.0.tar.gz", hash = "sha256:578c81501ccf6d18c0839d60636214fbd051f0ef37f1d207d4e3c92de2aac008", size = 37291, upload-time = "2026-03-07T09:33:44.989Z" }
 wheels = [
@@ -592,7 +592,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -631,7 +631,7 @@ name = "ghp-import"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "python-dateutil", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "python-dateutil" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d9/29/d40217cbe2f6b1359e00c6c307bb3fc876ba74068cbab3dde77f03ca0dc4/ghp-import-2.1.0.tar.gz", hash = "sha256:9c535c4c61193c2df8871222567d7fd7e5014d835f97dc7b7439069e2413d343", size = 10943, upload-time = "2022-05-02T15:47:16.11Z" }
 wheels = [
@@ -643,7 +643,7 @@ name = "gitdb"
 version = "4.0.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "smmap", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "smmap" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/72/94/63b0fc47eb32792c7ba1fe1b694daec9a63620db1e313033d18140c2320a/gitdb-4.0.12.tar.gz", hash = "sha256:5ef71f855d191a3326fcfbc0d5da835f26b13fbcba60c32c21091c349ffdb571", size = 394684, upload-time = "2025-01-02T07:20:46.413Z" }
 wheels = [
@@ -655,7 +655,7 @@ name = "gitpython"
 version = "3.1.62"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "gitdb", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "gitdb" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e0/db/3ca813cbacb23ab6fe46ff38a9b5ef8e73e970c8051f2ce903aacafe0446/gitpython-3.1.62.tar.gz", hash = "sha256:1791de66309bc0c7cfca40bf8d2e3de7ca091cbf94e6051be1ad0722c61062af", size = 231728, upload-time = "2026-09-07T02:57:21.155Z" }
 wheels = [
@@ -671,18 +671,14 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/1d/21/117c8710abb7f146d804a124c07eb5964a60b90d02b72452885aecc18efa/greenlet-3.5.1-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:7eacb17a9d41538a2bc4912eba5ef13823c83cb69e4d141d0813debe7163187f", size = 283510, upload-time = "2026-05-20T13:12:26.475Z" },
     { url = "https://files.pythonhosted.org/packages/b9/f7/6762a56fa5f6c2295c449c6524e10ce481e381c994cc44d9d03aef0700fb/greenlet-3.5.1-cp310-cp310-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e5cc9606aa5f4e0bde0d3bd502b44f743864c3ffa5cfa1011b1e30f5aa02366f", size = 599696, upload-time = "2026-05-20T14:00:02.906Z" },
     { url = "https://files.pythonhosted.org/packages/0f/05/85a511e68ee109aff0aa00b4b497806091dd2d82ce209e49c6e801bd5d92/greenlet-3.5.1-cp310-cp310-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:c3d35f87c7253b715d13d679e0783d845910144f282cb939fe1ba4ac8616269c", size = 612618, upload-time = "2026-05-20T14:05:39.202Z" },
-    { url = "https://files.pythonhosted.org/packages/2e/19/60df45065b2981ff894fdd51e7c99a3a4b107412822b083d88d5d528f663/greenlet-3.5.1-cp310-cp310-manylinux_2_24_s390x.manylinux_2_28_s390x.whl", hash = "sha256:00929c98ec525fd9bf075875d8c5f6a983a90906cdf78a66e6de2d8e466c2a19", size = 619237, upload-time = "2026-05-20T14:09:06.421Z" },
     { url = "https://files.pythonhosted.org/packages/89/b8/8b83d18ae07c46c019617f35afd7b47aab7f9b4fbb12fc637d681e10bdd8/greenlet-3.5.1-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:540dae7b956209af4d70a3be35927b4055f617763771e5e84a5255bea934d2f5", size = 612947, upload-time = "2026-05-20T13:14:23.469Z" },
-    { url = "https://files.pythonhosted.org/packages/26/9a/4ba4c2bc9d9df5f41bb8943fb7bb11e440352e6b9c2e36716b6e85f8b82d/greenlet-3.5.1-cp310-cp310-manylinux_2_39_riscv64.whl", hash = "sha256:001775efe7b8e758861294c7a27c28af87f3f3f1c20468a2bc618c45b346c061", size = 415653, upload-time = "2026-05-20T14:01:36.999Z" },
     { url = "https://files.pythonhosted.org/packages/5d/14/ad1f9fc9b82384c010212464a3702bd911f95dab2f1180bc6fbcfb1f958c/greenlet-3.5.1-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:ed8cdb691169715a9a492844a83246f090182247d1a5031dc78a403f68ba1e97", size = 1571425, upload-time = "2026-05-20T14:02:22.671Z" },
     { url = "https://files.pythonhosted.org/packages/46/1c/43b8203cf10f4292c9e3d270e9e5f5ade79115a0a0ca5ea6f1be5f8915a7/greenlet-3.5.1-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:9d59e840387076a51016777a9328b3f2c427c6f9208a6e958bad251be50a648d", size = 1638688, upload-time = "2026-05-20T13:14:30.026Z" },
     { url = "https://files.pythonhosted.org/packages/ac/6e/0344b1e99f58f71715456e46492101fd2daa408957b8186ade0a4b515da7/greenlet-3.5.1-cp310-cp310-win_amd64.whl", hash = "sha256:b9152fca4a6466e114aaec745ae61cba739903a109754a9d4e1262f01e9259b1", size = 237763, upload-time = "2026-05-20T13:11:35.659Z" },
     { url = "https://files.pythonhosted.org/packages/42/3c/ff890b466eaba2b0f5e6bdfff025f8c75f41b8ffdc3dbc3d24ad261e764a/greenlet-3.5.1-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:73f78f9b9f0a5c06e5c946ba1e8e36f5114923b6be109ee618c54f079c3ea14f", size = 284764, upload-time = "2026-05-20T13:09:10.204Z" },
     { url = "https://files.pythonhosted.org/packages/81/0e/5e5457be3d256918f6a4756f073548a3f0190836e2cc94aa6d0d617a940b/greenlet-3.5.1-cp311-cp311-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a0cbed8bb44e23c5b199f888f4e4ce096b45ad9f25ff74a7ad0213875e936bb2", size = 603479, upload-time = "2026-05-20T14:00:04.757Z" },
     { url = "https://files.pythonhosted.org/packages/6d/e1/f89a21d58d308298e6f275f13a1b472ed96c680b601a371b08be6a725989/greenlet-3.5.1-cp311-cp311-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:a203a8bd0acb0701653d3bbb26e404854a68674139ed5cbb778830f42b09bb33", size = 615495, upload-time = "2026-05-20T14:05:40.87Z" },
-    { url = "https://files.pythonhosted.org/packages/2c/f2/8fd452fd81adb9ec79c8275c1375702ab0fd6bee4952da12eaa09b9508d8/greenlet-3.5.1-cp311-cp311-manylinux_2_24_s390x.manylinux_2_28_s390x.whl", hash = "sha256:6ebeb75c81211f5c702576cf81f315e77e23cfdb2c7c6fcb9dd143e6de35c360", size = 623515, upload-time = "2026-05-20T14:09:07.853Z" },
     { url = "https://files.pythonhosted.org/packages/75/de/af6cef182862d2ccd6975440d21c9058a77c3f9b469abf94e322dfd2e0e3/greenlet-3.5.1-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8a271fcd66c74615cda6a964fda3f304267a12e50a084472218a39bb0376f563", size = 614754, upload-time = "2026-05-20T13:14:24.947Z" },
-    { url = "https://files.pythonhosted.org/packages/ec/bc/c318aa9f3ffc77320fddcee3d892be957b42e2ff947198d9450b004f3a38/greenlet-3.5.1-cp311-cp311-manylinux_2_39_riscv64.whl", hash = "sha256:017a544f0385d441e88714160d089d6900ef46c9eff9d99b6715a5ef2d127747", size = 418439, upload-time = "2026-05-20T14:01:38.446Z" },
     { url = "https://files.pythonhosted.org/packages/1a/c6/50e520283a9f19388a7326b05f9e8637e566003475eacaadad04f558c68d/greenlet-3.5.1-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:ded7b068c7c31c1a8657d4fd42d886b3e051ae29f88b80c5ff9d502257b0f071", size = 1574097, upload-time = "2026-05-20T14:02:24.003Z" },
     { url = "https://files.pythonhosted.org/packages/21/1c/13abd1f4860d987fa5e1170a01930d6e6cd40d328de487a3c9fdaff0ffd0/greenlet-3.5.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:d0932b81d72f552ded9d810d00021b64d89f2195a91ce115b893f943b7a4ab3c", size = 1641058, upload-time = "2026-05-20T13:14:31.83Z" },
     { url = "https://files.pythonhosted.org/packages/f5/56/5f332b7705545eac2dc01b4e9254d24a793f2656d55d5cc6b94ee59d22ae/greenlet-3.5.1-cp311-cp311-win_amd64.whl", hash = "sha256:88e300d136eac057b2397aa1cfd7328b4c87c7eb66a09c7bc6a1292234db474e", size = 238089, upload-time = "2026-05-20T13:14:03.229Z" },
@@ -690,9 +686,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c4/37/4549f149c9797c21b32c2683c33522af22522099de128b2406672526d005/greenlet-3.5.1-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:fa4f98af3a528f0c3fd592a26df7f376f93329c8f4d987f6bb979057af8bf5e2", size = 286220, upload-time = "2026-05-20T13:07:28.463Z" },
     { url = "https://files.pythonhosted.org/packages/38/ff/a4f436709716965eaab9f36ea7b906c8a927fbe32fb1372a2071d964f6b1/greenlet-3.5.1-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ffea73584b216150eab159b6d12348fb253e68757974de1e2c40d8a318ac89ed", size = 601585, upload-time = "2026-05-20T14:00:06.141Z" },
     { url = "https://files.pythonhosted.org/packages/65/ad/54bc3fcee3ad368a61b19b67d88117f7a8c29727bf71fffdeda81fbd946e/greenlet-3.5.1-cp312-cp312-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:1072b4f9edcc1e192d9283a66a3e68d6b84c561de33a83d7858beb9ba1effe10", size = 614215, upload-time = "2026-05-20T14:05:42.675Z" },
-    { url = "https://files.pythonhosted.org/packages/7c/6c/de5b1b388cd2d9fbdfeab324863daba37d54e6e233ddbefd70b385a8c591/greenlet-3.5.1-cp312-cp312-manylinux_2_24_s390x.manylinux_2_28_s390x.whl", hash = "sha256:89101bfd5011e069be974903cb3a4e4523845e4ece2d62dcd8d358933c0ef249", size = 620094, upload-time = "2026-05-20T14:09:09.18Z" },
     { url = "https://files.pythonhosted.org/packages/40/69/b91cda0647df839483201545913514c2827ebea5e5ccdf931842763bc127/greenlet-3.5.1-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:add5217d68b31130f0beca584d7fef4878327d2e31642b66618a14eef312b63b", size = 611358, upload-time = "2026-05-20T13:14:26.37Z" },
-    { url = "https://files.pythonhosted.org/packages/4a/43/1204baffab8a6476464795a7ccf394a3248d4f22c9f87173a15b36b6d971/greenlet-3.5.1-cp312-cp312-manylinux_2_39_riscv64.whl", hash = "sha256:e6cd99ea59dd5d89f0c956606571d79bfe6f68c9eb7f4a4083a41a7f1587edee", size = 422782, upload-time = "2026-05-20T14:01:39.597Z" },
     { url = "https://files.pythonhosted.org/packages/59/90/3cf77e080350cd02fa307bb2abf05df48f4482c240275bbd2c203ba8bb1c/greenlet-3.5.1-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:a5ea42a752d47a145eae922b605cd1634665ac3d5ec1e72402d5048e8d60d207", size = 1570475, upload-time = "2026-05-20T14:02:25.29Z" },
     { url = "https://files.pythonhosted.org/packages/65/2c/18cece62045e74598c3c393f70dce4a63f56222015ba29a5d4eeb04f764c/greenlet-3.5.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:c5551170cf4f5ff5623e9af81323751979fee2c731e2287b61f73cd27257b823", size = 1635625, upload-time = "2026-05-20T13:14:34.027Z" },
     { url = "https://files.pythonhosted.org/packages/30/f5/310d104ddf41eb5a70f4c268d22508dfb0c3c8e86fec152be34d0d2ed819/greenlet-3.5.1-cp312-cp312-win_amd64.whl", hash = "sha256:3c8bb982ad117d29478ef8f5533e97df21f1e2befd17a299257b0c96d1371c0b", size = 238791, upload-time = "2026-05-20T13:10:39.018Z" },
@@ -700,9 +694,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/27/69/7f7e5372d998b81001899b1c0823c957aa413ba0f2662e65821611cc31e4/greenlet-3.5.1-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:51518ff74664078fc51bffcc6fc529b0df5ae58da192691cee765d45ce944a2b", size = 285060, upload-time = "2026-05-20T13:08:51.899Z" },
     { url = "https://files.pythonhosted.org/packages/b1/bf/387f9b6b865fd2ae0d0be09e0004827295a01b71be76ed350dd1e28a91a4/greenlet-3.5.1-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1ffdb3c0bb002c99cd8f298957e046c3dbf6006b5b7cdf11a4e19194624a0a0a", size = 604370, upload-time = "2026-05-20T14:00:07.492Z" },
     { url = "https://files.pythonhosted.org/packages/32/f5/169ce3d4e4c67291bd18f8cbe0299c9f3e45102c7f1fb3c14780c93e4532/greenlet-3.5.1-cp313-cp313-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:7715a5a2c3378ba602c3a440558261e13a820bb53a82693aacd7b7f6d964e283", size = 616987, upload-time = "2026-05-20T14:05:44.237Z" },
-    { url = "https://files.pythonhosted.org/packages/19/ba/c24110c55dffa55aa6e1d98b45310da33801aeba7686ff0190fe5d46fd32/greenlet-3.5.1-cp313-cp313-manylinux_2_24_s390x.manylinux_2_28_s390x.whl", hash = "sha256:d40a890035c0058cadbdc4af7569800fd28a0e527a0fdbb7b5f9418f176846ce", size = 622911, upload-time = "2026-05-20T14:09:10.598Z" },
     { url = "https://files.pythonhosted.org/packages/ee/e5/7f2e41d5273be07e77560d61ea4e56485b4d6c316d2a84518c62d1364061/greenlet-3.5.1-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:dc71ff466927a201b08305acac451ebe1aedfcea002f62f1f2f2ac2ac1e6a135", size = 613911, upload-time = "2026-05-20T13:14:27.539Z" },
-    { url = "https://files.pythonhosted.org/packages/ec/7b/d20db2e8a5ad6c038702f3179b136f93f0a3d1a21a0c0777f3e470cdf4b2/greenlet-3.5.1-cp313-cp313-manylinux_2_39_riscv64.whl", hash = "sha256:67821bb03e4e98664490edb787ff6af501194c29bbee0f5c1dfdcf1dc3d9d436", size = 425228, upload-time = "2026-05-20T14:01:40.837Z" },
     { url = "https://files.pythonhosted.org/packages/c5/a4/fbdc67579b73615a1f91615e814303cc71e06128f7baaba87be79b8fb90c/greenlet-3.5.1-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:cd443683db272ebaaca03af98c0b063ab30db70ea8a31a1559f35e3f7b744ccd", size = 1570689, upload-time = "2026-05-20T14:02:27.225Z" },
     { url = "https://files.pythonhosted.org/packages/e6/b4/77abbe35078be39718a46cd49caf16bceb35662f97a34101dca28aa98e47/greenlet-3.5.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:089fff7a6ce8d9316d1f65ebc00273a56be258c1725b32b94de90a3a979557e1", size = 1635602, upload-time = "2026-05-20T13:14:36.344Z" },
     { url = "https://files.pythonhosted.org/packages/37/f7/129f27ca700845b8ee8ca88ce7f43435a1239c2eddb7677fc938822762cf/greenlet-3.5.1-cp313-cp313-win_amd64.whl", hash = "sha256:110a1ca7b49b014b097f6078272c3f4ed31af45b254de5228b79adba879f6af9", size = 238683, upload-time = "2026-05-20T13:11:50.57Z" },
@@ -710,9 +702,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/8a/cb/c62454606daf5640369c94d8a9dd540599b1bfc090e2d2180cb77f4038d2/greenlet-3.5.1-cp314-cp314-macosx_11_0_universal2.whl", hash = "sha256:d8ab31c9de8651a2facdd5c5bb0011f2380dd1a7af78ce2adf4b56095294fc07", size = 285579, upload-time = "2026-05-20T13:08:56.396Z" },
     { url = "https://files.pythonhosted.org/packages/ec/71/c4270398c2eba968a6071af1dfbdcaeee6ec1c24bc8b435b8cc452700da6/greenlet-3.5.1-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5e300185139abc337ade480c327183adf42a875ac7181bfe66d7d4efea31fbea", size = 651106, upload-time = "2026-05-20T14:00:09.448Z" },
     { url = "https://files.pythonhosted.org/packages/1a/ab/71e34b78a44ec271fb5f550c17bc46d301ddc5953890d935f270b0dcdb5a/greenlet-3.5.1-cp314-cp314-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:7ffdb990dcaa0234cf9845aead5df2e3c3a8b6507d409274dd87e0d5ab05ffc2", size = 663478, upload-time = "2026-05-20T14:05:45.88Z" },
-    { url = "https://files.pythonhosted.org/packages/c6/2d/2d80842910da44f78c286532d084b8a5c3717c844ae80ceb3858738ae89a/greenlet-3.5.1-cp314-cp314-manylinux_2_24_s390x.manylinux_2_28_s390x.whl", hash = "sha256:6c09df69dc1712d131332054a858a3e5cca400967fa3a672e2324fbb0971448c", size = 667767, upload-time = "2026-05-20T14:09:12.15Z" },
     { url = "https://files.pythonhosted.org/packages/77/96/4efd6fa5c62c85426a0c19077a586258ebc3a2a146ff2493e4312a697a22/greenlet-3.5.1-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2f82b3597e9d83b63408affed0b48fd0f54935edac4302237b9a837be0dae33c", size = 660800, upload-time = "2026-05-20T13:14:29.129Z" },
-    { url = "https://files.pythonhosted.org/packages/e9/d3/dad2eecedfbb1ed7050a20dcfae40c1442b74bc7423608be2c7e03ee7133/greenlet-3.5.1-cp314-cp314-manylinux_2_39_riscv64.whl", hash = "sha256:a4764e0bfc6a4d114c865b32520805c16a990ef5f286a514413b05d5ecd6a23d", size = 470786, upload-time = "2026-05-20T14:01:42.064Z" },
     { url = "https://files.pythonhosted.org/packages/7a/e0/6c71401a25cac7000261304e866a2f2cc04dc74810d40e2f118aa4799495/greenlet-3.5.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:c0141e37414c10164e702b8fb1473304221ad98f71600850c6ef7ff4880feba0", size = 1617518, upload-time = "2026-05-20T14:02:28.662Z" },
     { url = "https://files.pythonhosted.org/packages/41/26/c5c06643e8c0af9e7bf18e16cb51d0ab7625155f0392e1c9015d66d556cd/greenlet-3.5.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:50ae25a67bea74ea41fb14b960bc532df73eb713417b2d61892dced82fe8d3bc", size = 1681593, upload-time = "2026-05-20T13:14:39.417Z" },
     { url = "https://files.pythonhosted.org/packages/8a/bd/e11a108317485075e68af9d23039619b86b28130c3b50d227d42edece64b/greenlet-3.5.1-cp314-cp314-win_amd64.whl", hash = "sha256:8a17c42330e261299766b75ac1ea32caa437a9453c8f65d16a13140db378ecd3", size = 239800, upload-time = "2026-05-20T13:09:30.128Z" },
@@ -720,18 +710,14 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/90/12/41bf27fde4d3605d3773ae57751eda182b8be2f5398011c041173b1d9534/greenlet-3.5.1-cp314-cp314t-macosx_11_0_universal2.whl", hash = "sha256:ea8da1e900d758d078810d4255d8c6aa572181896a31ec79d779eb79c3adc9ad", size = 293637, upload-time = "2026-05-20T13:12:35.529Z" },
     { url = "https://files.pythonhosted.org/packages/44/44/ba14b23e9757707050c2f397d305bbcae62e5d7cad122f8b6baec5ae4a1f/greenlet-3.5.1-cp314-cp314t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a19570c52a21420dcbc94e661994bc325c0b5b11304540fed514586da5dc8f2e", size = 650840, upload-time = "2026-05-20T14:00:11.079Z" },
     { url = "https://files.pythonhosted.org/packages/a8/37/5ddc2b686a6844f91abecef43411842426da2e1573f60b49ecf2547f4ae1/greenlet-3.5.1-cp314-cp314t-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:3d955c89b75eeca4723d7cc14135f393cd47c32e2a6cb4a8e4c6e760a26b0986", size = 656416, upload-time = "2026-05-20T14:05:47.118Z" },
-    { url = "https://files.pythonhosted.org/packages/8c/46/5987dcd1a2570ba84f3b187536b2ca3ae97613387e57f5cfa99df068fe5e/greenlet-3.5.1-cp314-cp314t-manylinux_2_24_s390x.manylinux_2_28_s390x.whl", hash = "sha256:ea37d5a157eb9493820d3792ac4ece28619a394391d2b9f2f78057d396ff0f0f", size = 656607, upload-time = "2026-05-20T14:09:13.949Z" },
     { url = "https://files.pythonhosted.org/packages/e1/f0/d17510297c35a2992712f0bf84de3779749999f7d3d63aa1f09db7c62dbe/greenlet-3.5.1-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:de2daaaebd1a5aa88c49045b6baf9310b3263796bd88db713edf37cf53e7bb4e", size = 654397, upload-time = "2026-05-20T13:14:30.696Z" },
-    { url = "https://files.pythonhosted.org/packages/2c/c1/6da0a9ddcc29d7e51ef14883fa3dc1e53b3f4ffba00582106c7bf55da1d8/greenlet-3.5.1-cp314-cp314t-manylinux_2_39_riscv64.whl", hash = "sha256:8d8a23250ea3ec7b36de8fa4b541e9e2db3ee82915cc060ab0631609ad8b28de", size = 488287, upload-time = "2026-05-20T14:01:43.143Z" },
     { url = "https://files.pythonhosted.org/packages/37/eb/147387705bb89092645b012586e7273cb5ed3c90ef7eaf3a69173eaf0209/greenlet-3.5.1-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:3bfbd69cc349e43bf3a8ae1c85548ff0718efc887615c2db16c3833d7b0b072d", size = 1614469, upload-time = "2026-05-20T14:02:30.192Z" },
     { url = "https://files.pythonhosted.org/packages/a6/4e/37ee0da7732b7aa9896f17e15579a9df34b9fcb9dd494f0adfa749af6623/greenlet-3.5.1-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:4378720dd888136c27215a0214d32a4d37c3852765d45bc37aad0623423cfd78", size = 1675115, upload-time = "2026-05-20T13:14:40.972Z" },
     { url = "https://files.pythonhosted.org/packages/57/f3/97dfcf4a6eb5077f8a672234216fb5923eb89f2cab7081cb10b2cf75b605/greenlet-3.5.1-cp314-cp314t-win_amd64.whl", hash = "sha256:45718441607f9325d948db98cbc691276059316d0358c188c246da4e1d4d23d2", size = 245246, upload-time = "2026-05-20T13:12:22.646Z" },
     { url = "https://files.pythonhosted.org/packages/5d/73/d7f72e34b582f694f4a9b248162db7b09cc458a259ba8f0c0bfa1a34ea7d/greenlet-3.5.1-cp315-cp315-macosx_11_0_universal2.whl", hash = "sha256:2baee5ca02031757ffe8cc3d69f0cc0aec7065ce362622da74f32d3bcab1c541", size = 285575, upload-time = "2026-05-20T13:12:07.043Z" },
     { url = "https://files.pythonhosted.org/packages/df/59/fa9c6e87dc8ad27a95dabe2f29f372b733d05a8a67470f6c901ed9975655/greenlet-3.5.1-cp315-cp315-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9b1ec3274918a81d3ea778b9e75b56b72b33f300edb6cf7f3a7fe1dae56683de", size = 656428, upload-time = "2026-05-20T14:00:12.556Z" },
     { url = "https://files.pythonhosted.org/packages/f6/f9/e753408871eaa61dfe35e619cfc67512b036fde99893685d50eea9e07146/greenlet-3.5.1-cp315-cp315-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:111e2390ffffc47d5840b01711dd7fac07d4c09283d0283e7f3264b14e284c64", size = 667064, upload-time = "2026-05-20T14:05:48.662Z" },
-    { url = "https://files.pythonhosted.org/packages/dc/74/807a047255bf1e09303627c46dc043dca596b6958a354d904f32ab382005/greenlet-3.5.1-cp315-cp315-manylinux_2_24_s390x.manylinux_2_28_s390x.whl", hash = "sha256:10a9a1c0bfbc93d41156ffcb90c75fbc05544054faf15dcc1fdf9765f8b607f0", size = 672962, upload-time = "2026-05-20T14:09:15.532Z" },
     { url = "https://files.pythonhosted.org/packages/96/27/5565b5b40389f1c7753003a07e21892fda8660926787036d5bc0308b8113/greenlet-3.5.1-cp315-cp315-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e630136e905fe5ff43e86945ae41220b6d1470956a39220e708110ac48d01ea5", size = 665697, upload-time = "2026-05-20T13:14:32.943Z" },
-    { url = "https://files.pythonhosted.org/packages/76/32/19d4e13225193c29b13e308015223f7d75fd3d8623d49dd19040d2ce8ec1/greenlet-3.5.1-cp315-cp315-manylinux_2_39_riscv64.whl", hash = "sha256:ef08c1567c78074b22d1a200183d52d04a14df447bf70bcbb6a3507a48e776fc", size = 476047, upload-time = "2026-05-20T14:01:44.39Z" },
     { url = "https://files.pythonhosted.org/packages/cf/82/e7de4178c0c2d1c9a5a3be3cc0b33e46a85b3ee4a77c071bf7ad8600e079/greenlet-3.5.1-cp315-cp315-musllinux_1_2_aarch64.whl", hash = "sha256:975eac34b44a7077ca4d421348455b94f0f518246a7f14bc6d2fdcfe5b584368", size = 1621256, upload-time = "2026-05-20T14:02:31.91Z" },
     { url = "https://files.pythonhosted.org/packages/00/10/f2dddcf7dacac17dfc68691809589adad06135eb28930429cf58a6467a2f/greenlet-3.5.1-cp315-cp315-musllinux_1_2_x86_64.whl", hash = "sha256:9ab3c3a0b2ae6198e67c898dad5215a49f9ae0d0081b3c3ec59f333e39eeca26", size = 1685956, upload-time = "2026-05-20T13:14:42.55Z" },
     { url = "https://files.pythonhosted.org/packages/22/17/4a232b32133230ada52f70e9d7f5b65b0caef8772f01849bd8d149e7e4ca/greenlet-3.5.1-cp315-cp315-win_amd64.whl", hash = "sha256:cbfc69be86e10dcfef5b1e6269d1d6926552aa89ee39e1de3353360c1b6989ab", size = 239802, upload-time = "2026-05-20T13:13:15.481Z" },
@@ -739,9 +725,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7a/57/816d9cff29119da3505b3d6a5e14a8af89006ac36f47f891ff293ee05af1/greenlet-3.5.1-cp315-cp315t-macosx_11_0_universal2.whl", hash = "sha256:a6fdf2433a5441ef9a95464f7c3e674775da1c8c1177fff311cee1acad4626ed", size = 293877, upload-time = "2026-05-20T13:10:19.078Z" },
     { url = "https://files.pythonhosted.org/packages/23/a1/59b0a7c7d140ff1a75626680b9a9899b79a9176cab298b394968fb023295/greenlet-3.5.1-cp315-cp315t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7546556f0d649f99f6a361098a55f761181bb2ea12ff150bb16d26092ad88244", size = 655333, upload-time = "2026-05-20T14:00:14.758Z" },
     { url = "https://files.pythonhosted.org/packages/72/1b/5efe127597625042218939d01855109f352779050768b670b52edcc16a6c/greenlet-3.5.1-cp315-cp315t-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:d5ee3ea898009fa898f85f9982255d35278c477bebe185beca249cab42d4526c", size = 659443, upload-time = "2026-05-20T14:05:50.159Z" },
-    { url = "https://files.pythonhosted.org/packages/c9/9d/1dcdf7b95ab3cf8c7b6d7277c18a5e167312f2b362ddfcc5d5e6d8d84b43/greenlet-3.5.1-cp315-cp315t-manylinux_2_24_s390x.manylinux_2_28_s390x.whl", hash = "sha256:a57b0d05a0448eed231d59c0ceb287dde984551e54cbc51ac2d4865712838e9c", size = 659998, upload-time = "2026-05-20T14:09:16.912Z" },
     { url = "https://files.pythonhosted.org/packages/6c/6d/c404246ea4d22d097a7426d0efb5b781bd7eb67715f09e79001bd552ab18/greenlet-3.5.1-cp315-cp315t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a5c81f74d204d3edd136ebfd50dce53acbb776995d721a0fe801626cfc93b8cd", size = 658356, upload-time = "2026-05-20T13:14:35.091Z" },
-    { url = "https://files.pythonhosted.org/packages/05/7e/c4959664fc231d587d66d8e81f2095e98056ba1954beafdcbe635e251052/greenlet-3.5.1-cp315-cp315t-manylinux_2_39_riscv64.whl", hash = "sha256:b0703c2cef53e01baec47f7a3868009913ad71ec678bbecb42a6f40895e4ce62", size = 494470, upload-time = "2026-05-20T14:01:45.611Z" },
     { url = "https://files.pythonhosted.org/packages/51/02/f8ee37fb6d2219329f350af241c27fcf12df57e723d11f6fc6d3bacdadaa/greenlet-3.5.1-cp315-cp315t-musllinux_1_2_aarch64.whl", hash = "sha256:2c18ef16bf6d4dd410e4dd52996888ea1497be26892fe5bbc73580aba4287b8e", size = 1619216, upload-time = "2026-05-20T14:02:33.403Z" },
     { url = "https://files.pythonhosted.org/packages/93/c5/3dc9475ace2c7a3680da12372cddd7f1ac874eb410a1ac48d3e9dab83782/greenlet-3.5.1-cp315-cp315t-musllinux_1_2_x86_64.whl", hash = "sha256:17d86354f0ae6b61bf9be5148d0dd34e06c3cb7c602c671f79f29ac3b150e659", size = 1678427, upload-time = "2026-05-20T13:14:43.71Z" },
     { url = "https://files.pythonhosted.org/packages/df/4e/750c15c317a41ffb36f0bf40b933e3d744a7dede61889f74443ea69690cf/greenlet-3.5.1-cp315-cp315t-win_amd64.whl", hash = "sha256:e7516cf6ae6b8a582c2770a0caed47b8a48373ed732c33d69a72913ae6ac923e", size = 245225, upload-time = "2026-05-20T13:13:59.366Z" },
@@ -753,8 +737,8 @@ name = "griffe"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "griffecli", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "griffelib", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "griffecli" },
+    { name = "griffelib" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d5/03/75ca4d08a7eff164292d42cf72c7c510423b3414e66205f0ba5b35ad3034/griffe-2.3.0.tar.gz", hash = "sha256:aa5634c0d7802583ecd29a7fe335c02d462ffdf5ce8f51426a3d326f374e6d93", size = 247493, upload-time = "2026-09-04T15:08:15.364Z" }
 wheels = [
@@ -766,8 +750,8 @@ name = "griffecli"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "griffelib", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "colorama" },
+    { name = "griffelib" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5c/15/f70539f7efb44f27d209b43e386b1a5397bd476879ff19a206b75454f58e/griffecli-2.3.0.tar.gz", hash = "sha256:916fdc851cf51d38e9b5ab82550305df45e5981d5dfe65d346544464abedb3ec", size = 59676, upload-time = "2026-09-04T15:08:16.426Z" }
 wheels = [
@@ -797,8 +781,8 @@ name = "httpcore"
 version = "1.0.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "certifi", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "h11", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "certifi" },
+    { name = "h11" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/06/94/82699a10bca87a5556c9c59b5963f2d039dbd239f25bc2a63907a05a14cb/httpcore-1.0.9.tar.gz", hash = "sha256:6e34463af53fd2ab5d807f399a9b45ea31c3dfa2276f15a2c3f00afff6e176e8", size = 85484, upload-time = "2025-04-24T22:06:22.219Z" }
 wheels = [
@@ -810,10 +794,10 @@ name = "httpx"
 version = "0.28.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "anyio", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "certifi", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "httpcore", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "idna", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "anyio" },
+    { name = "certifi" },
+    { name = "httpcore" },
+    { name = "idna" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
 wheels = [
@@ -883,8 +867,8 @@ dependencies = [
     { name = "attrs" },
     { name = "jsonschema-specifications" },
     { name = "referencing" },
-    { name = "rpds-py", version = "0.30.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "rpds-py", version = "2026.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "rpds-py", version = "0.30.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "rpds-py", version = "2026.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b3/fc/e067678238fa451312d4c62bf6e6cf5ec56375422aee02f9cb5f909b3047/jsonschema-4.26.0.tar.gz", hash = "sha256:0c26707e2efad8aa1bfc5b7ce170f3fccc2e4918ff85989ba9ffa9facb2be326", size = 366583, upload-time = "2026-01-07T13:41:07.246Z" }
 wheels = [
@@ -908,11 +892,11 @@ name = "jupyter-client"
 version = "8.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jupyter-core", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "python-dateutil", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyzmq", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "tornado", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "traitlets", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "jupyter-core" },
+    { name = "python-dateutil" },
+    { name = "pyzmq" },
+    { name = "tornado" },
+    { name = "traitlets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/05/e4/ba649102a3bc3fbca54e7239fb924fd434c766f855693d86de0b1f2bec81/jupyter_client-8.8.0.tar.gz", hash = "sha256:d556811419a4f2d96c869af34e854e3f059b7cc2d6d01a9cd9c85c267691be3e", size = 348020, upload-time = "2026-01-08T13:55:47.938Z" }
 wheels = [
@@ -924,8 +908,8 @@ name = "jupyter-core"
 version = "5.9.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "platformdirs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "traitlets", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "platformdirs" },
+    { name = "traitlets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/02/49/9d1284d0dc65e2c757b74c6687b6d319b02f822ad039e5c512df9194d9dd/jupyter_core-5.9.1.tar.gz", hash = "sha256:4d09aaff303b9566c3ce657f580bd089ff5c91f5f89cf7d8846c3cdf465b5508", size = 89814, upload-time = "2025-10-16T19:19:18.444Z" }
 wheels = [
@@ -1158,7 +1142,7 @@ name = "markdown-it-py"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "mdurl", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "mdurl" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/38/71/3b932df36c1a044d397a1f92d1cf91ee0a503d91e470cbd670aa66b07ed0/markdown-it-py-3.0.0.tar.gz", hash = "sha256:e3f60a94fa066dc52ec76661e37c851cb232d92f9886b15cb560aaada2df8feb", size = 74596, upload-time = "2023-06-03T06:41:14.443Z" }
 wheels = [
@@ -1170,8 +1154,8 @@ name = "markdownify"
 version = "1.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "beautifulsoup4", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "six", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "beautifulsoup4" },
+    { name = "six" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3f/bc/c8c8eea5335341306b0fa7e1cb33c5e1c8d24ef70ddd684da65f41c49c92/markdownify-1.2.2.tar.gz", hash = "sha256:b274f1b5943180b031b699b199cbaeb1e2ac938b75851849a31fd0c3d6603d09", size = 18816, upload-time = "2025-11-16T19:21:18.565Z" }
 wheels = [
@@ -1268,7 +1252,7 @@ name = "mdformat"
 version = "0.7.22"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "markdown-it-py", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "markdown-it-py" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fc/eb/b5cbf2484411af039a3d4aeb53a5160fae25dd8c84af6a4243bc2f3fedb3/mdformat-0.7.22.tar.gz", hash = "sha256:eef84fa8f233d3162734683c2a8a6222227a229b9206872e6139658d99acb1ea", size = 34610, upload-time = "2025-01-30T18:00:51.418Z" }
 wheels = [
@@ -1280,8 +1264,8 @@ name = "mdformat-tables"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "mdformat", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "wcwidth", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "mdformat" },
+    { name = "wcwidth" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/64/fc/995ba209096bdebdeb8893d507c7b32b7e07d9a9f2cdc2ec07529947794b/mdformat_tables-1.0.0.tar.gz", hash = "sha256:a57db1ac17c4a125da794ef45539904bb8a9592e80557d525e1f169c96daa2c8", size = 6106, upload-time = "2024-08-23T23:41:33.413Z" }
 wheels = [
@@ -1320,19 +1304,19 @@ name = "mkdocs"
 version = "1.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "click", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "colorama", marker = "(python_full_version >= '3.13' and sys_platform == 'win32') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing') or (sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "ghp-import", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markdown", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markupsafe", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mergedeep", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs-get-deps", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "packaging", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pathspec", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyyaml", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyyaml-env-tag", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "watchdog", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "click" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "ghp-import" },
+    { name = "jinja2" },
+    { name = "markdown" },
+    { name = "markupsafe" },
+    { name = "mergedeep" },
+    { name = "mkdocs-get-deps" },
+    { name = "packaging" },
+    { name = "pathspec" },
+    { name = "pyyaml" },
+    { name = "pyyaml-env-tag" },
+    { name = "watchdog" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/bc/c6/bbd4f061bd16b378247f12953ffcb04786a618ce5e904b8c5a01a0309061/mkdocs-1.6.1.tar.gz", hash = "sha256:7b432f01d928c084353ab39c57282f29f92136665bdd6abf7c1ec8d822ef86f2", size = 3889159, upload-time = "2024-08-30T12:24:06.899Z" }
 wheels = [
@@ -1344,9 +1328,9 @@ name = "mkdocs-autorefs"
 version = "1.4.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "markdown", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markupsafe", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "markdown" },
+    { name = "markupsafe" },
+    { name = "mkdocs" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/52/c0/f641843de3f612a6b48253f39244165acff36657a91cc903633d456ae1ac/mkdocs_autorefs-1.4.4.tar.gz", hash = "sha256:d54a284f27a7346b9c38f1f852177940c222da508e66edc816a0fa55fc6da197", size = 56588, upload-time = "2026-02-10T15:23:55.105Z" }
 wheels = [
@@ -1358,9 +1342,9 @@ name = "mkdocs-get-deps"
 version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "mergedeep", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "platformdirs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyyaml", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "mergedeep" },
+    { name = "platformdirs" },
+    { name = "pyyaml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ce/25/b3cccb187655b9393572bde9b09261d267c3bf2f2cdabe347673be5976a6/mkdocs_get_deps-0.2.2.tar.gz", hash = "sha256:8ee8d5f316cdbbb2834bc1df6e69c08fe769a83e040060de26d3c19fad3599a1", size = 11047, upload-time = "2026-03-10T02:46:33.632Z" }
 wheels = [
@@ -1372,10 +1356,10 @@ name = "mkdocs-llmstxt"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "beautifulsoup4", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markdownify", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mdformat", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mdformat-tables", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "beautifulsoup4" },
+    { name = "markdownify" },
+    { name = "mdformat" },
+    { name = "mdformat-tables" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7f/f5/4c31cdffa7c09bf48d8c7a50d8342dc100abac98ac4150826bc11afc0c9f/mkdocs_llmstxt-0.5.0.tar.gz", hash = "sha256:b2fa9e6d68df41d7467e948a4745725b6c99434a36b36204857dbd7bb3dfe041", size = 33909, upload-time = "2025-11-20T14:02:24.861Z" }
 wheels = [
@@ -1387,17 +1371,17 @@ name = "mkdocs-material"
 version = "9.7.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "babel", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "backrefs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "colorama", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markdown", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs-material-extensions", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "paginate", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pygments", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pymdown-extensions", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "requests", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "babel" },
+    { name = "backrefs" },
+    { name = "colorama" },
+    { name = "jinja2" },
+    { name = "markdown" },
+    { name = "mkdocs" },
+    { name = "mkdocs-material-extensions" },
+    { name = "paginate" },
+    { name = "pygments" },
+    { name = "pymdown-extensions" },
+    { name = "requests" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f1/cd/c05d3a530ba7934f144fb45f7203cd236adc25c7bdcc34673d202f4b0278/mkdocs_material-9.7.7.tar.gz", hash = "sha256:c0649c065b1b0512d60aad8c10f947f8e455284475239b364b610f2deb4d0855", size = 4097923, upload-time = "2026-07-17T16:21:33.156Z" }
 wheels = [
@@ -1418,12 +1402,12 @@ name = "mkdocs-rss-plugin"
 version = "1.19.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cachecontrol", extra = ["filecache"], marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "gitpython", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "properdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "requests", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "tzdata", marker = "(python_full_version >= '3.13' and sys_platform == 'win32') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing') or (sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "cachecontrol", extra = ["filecache"] },
+    { name = "gitpython" },
+    { name = "mkdocs" },
+    { name = "properdocs" },
+    { name = "requests" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/22/e8/70055ec6d7105c0f7c84918e0f98180443b5065469b2877aca43067a5709/mkdocs_rss_plugin-1.19.0.tar.gz", hash = "sha256:0b9b7f14688393e5bd7d26a6dc14dfd2b228a8cdfe5b598a6677589b2159d957", size = 573045, upload-time = "2026-04-17T09:35:34.115Z" }
 wheels = [
@@ -1435,8 +1419,8 @@ name = "mkdocs-video"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "lxml", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "lxml" },
+    { name = "mkdocs" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cf/16/45213649b6756744f36f31014fc8673df1d7c998bb9a801c2d769fff4114/mkdocs-video-1.5.0.tar.gz", hash = "sha256:0defc018f4b7927f8afffc4d8e039c84dfba636dffc5e25e2bfa8d6350bc8eca", size = 5633, upload-time = "2023-03-17T17:36:43.343Z" }
 wheels = [
@@ -1448,12 +1432,12 @@ name = "mkdocstrings"
 version = "1.0.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markdown", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markupsafe", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs-autorefs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pymdown-extensions", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "jinja2" },
+    { name = "markdown" },
+    { name = "markupsafe" },
+    { name = "mkdocs" },
+    { name = "mkdocs-autorefs" },
+    { name = "pymdown-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/53/71/f85bdf13355073ae15a7375f09879375a830553552e58c1c4b7e0bbc5c8b/mkdocstrings-1.0.6.tar.gz", hash = "sha256:a0b8c2bdd29a6416c80d717aa369bbf7831946bd9f23c2a66db1b1dbe7693dbd", size = 100649, upload-time = "2026-07-11T19:38:05.732Z" }
 wheels = [
@@ -1465,9 +1449,9 @@ name = "mkdocstrings-python"
 version = "2.0.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "griffelib", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs-autorefs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocstrings", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "griffelib" },
+    { name = "mkdocs-autorefs" },
+    { name = "mkdocstrings" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/96/11/640067d1ad713ea99c233e53e57a4c300d9885f904a61371d7ef90dea549/mkdocstrings_python-2.0.9.tar.gz", hash = "sha256:ae945637dc0618c6beedbee169f10c0234b77f322c53db3fc9fb4c29b3013038", size = 203006, upload-time = "2026-09-22T13:43:27.712Z" }
 wheels = [
@@ -1479,11 +1463,11 @@ name = "mknotebooks"
 version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "gitpython", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jupyter-client", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markdown", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "nbconvert", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "gitpython" },
+    { name = "jupyter-client" },
+    { name = "markdown" },
+    { name = "mkdocs" },
+    { name = "nbconvert" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/40/2f69d9858c06d3fd9232fe7ead0c828cc3d64783edb98476782a7f125977/mknotebooks-0.8.0-py3-none-any.whl", hash = "sha256:4a9b998260c09bcc311455a19a44cc395a30ee82dc1e86e3316dd09f2445ebd3", size = 13230, upload-time = "2023-08-07T10:01:06.289Z" },
@@ -1568,10 +1552,10 @@ version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ast-serialize" },
-    { name = "librt", marker = "platform_python_implementation != 'PyPy' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "librt", marker = "platform_python_implementation != 'PyPy'" },
     { name = "mypy-extensions" },
     { name = "pathspec" },
-    { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/82/15/cca9d88503549ed6fedeaa1d448cdddd542ee8a490232d732e278036fbf2/mypy-2.1.0.tar.gz", hash = "sha256:81e76ad12c2d804512e9b13240d1588316531bfba07558286078bfbce9613633", size = 3898359, upload-time = "2026-05-11T18:37:36.237Z" }
@@ -1644,10 +1628,10 @@ name = "nbclient"
 version = "0.10.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jupyter-client", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jupyter-core", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "nbformat", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "traitlets", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "jupyter-client" },
+    { name = "jupyter-core" },
+    { name = "nbformat" },
+    { name = "traitlets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/56/91/1c1d5a4b9a9ebba2b4e32b8c852c2975c872aec1fe42ab5e516b2cecd193/nbclient-0.10.4.tar.gz", hash = "sha256:1e54091b16e6da39e297b0ece3e10f6f29f4ac4e8ee515d29f8a7099bd6553c9", size = 62554, upload-time = "2025-12-23T07:45:46.369Z" }
 wheels = [
@@ -1659,20 +1643,20 @@ name = "nbconvert"
 version = "7.17.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "beautifulsoup4", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "bleach", extra = ["css"], marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "defusedxml", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jupyter-core", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jupyterlab-pygments", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markupsafe", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mistune", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "nbclient", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "nbformat", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "packaging", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pandocfilters", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pygments", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "traitlets", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "beautifulsoup4" },
+    { name = "bleach", extra = ["css"] },
+    { name = "defusedxml" },
+    { name = "jinja2" },
+    { name = "jupyter-core" },
+    { name = "jupyterlab-pygments" },
+    { name = "markupsafe" },
+    { name = "mistune" },
+    { name = "nbclient" },
+    { name = "nbformat" },
+    { name = "packaging" },
+    { name = "pandocfilters" },
+    { name = "pygments" },
+    { name = "traitlets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/53/6a/252c7620305a9661205aed7a2a4b3592f5207bfca56ad11b7dea2c5ec2f6/nbconvert-7.17.2.tar.gz", hash = "sha256:344a218e8595117ce37396ed025d994f146d076226ebac59255a2fa085ab24d8", size = 865989, upload-time = "2026-10-12T09:11:19.583Z" }
 wheels = [
@@ -1684,10 +1668,10 @@ name = "nbformat"
 version = "5.10.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "fastjsonschema", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jsonschema", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jupyter-core", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "traitlets", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "fastjsonschema" },
+    { name = "jsonschema" },
+    { name = "jupyter-core" },
+    { name = "traitlets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6d/fd/91545e604bc3dad7dca9ed03284086039b294c6b3d75c0d2fa45f9e9caf3/nbformat-5.10.4.tar.gz", hash = "sha256:322168b14f937a5d11362988ecac2a4952d3d8e3a2cbeb2319584631226d5b3a", size = 142749, upload-time = "2024-04-04T11:20:37.371Z" }
 wheels = [
@@ -1699,12 +1683,12 @@ name = "neoteroi-mkdocs"
 version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "click", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "essentials-openapi", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "httpx", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "rich", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "click" },
+    { name = "essentials-openapi" },
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "mkdocs" },
+    { name = "rich" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d2/36/7cc711922112a1293568b8bc2f94bfaae0104bf5c1e5b3cdcfd6068023c7/neoteroi_mkdocs-1.2.0.tar.gz", hash = "sha256:58e25cb1b9db093ffa8d12bdb33264bf567cac30fb964b56e0a493efa749ad6e", size = 25354, upload-time = "2025-11-23T10:49:23.44Z" }
 wheels = [
@@ -1989,10 +1973,10 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "python-dateutil", marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pytz", marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "tzdata", marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" } },
+    { name = "python-dateutil" },
+    { name = "pytz" },
+    { name = "tzdata" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/01/d40b85317f86cf08d853a4f495195c73815fdf205eef3993821720274518/pandas-2.3.3.tar.gz", hash = "sha256:e05e1af93b977f7eafa636d043f9f94c7ee3ac81af99c13508215942e64c993b", size = 4495223, upload-time = "2025-09-29T23:34:51.853Z" }
 wheels = [
@@ -2067,10 +2051,10 @@ resolution-markers = [
     "python_full_version == '3.11.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "python-dateutil", marker = "python_full_version >= '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "tzdata", marker = "(python_full_version >= '3.11' and sys_platform == 'emscripten') or (python_full_version >= '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing') or (sys_platform == 'emscripten' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (sys_platform == 'emscripten' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing') or (sys_platform == 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (sys_platform == 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "python-dateutil" },
+    { name = "tzdata", marker = "sys_platform == 'emscripten' or sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f8/87/4341c6252d1c47b08768c3d25ac487362bf403f0313ddae4a2a26c9b1b4c/pandas-3.0.3.tar.gz", hash = "sha256:696a4a00a2a2a35d4e5deb3fc946641b96c944f02230e4f76137fe35d806c4fc", size = 4651414, upload-time = "2026-05-11T18:54:29.21Z" }
 wheels = [
@@ -2164,18 +2148,18 @@ name = "properdocs"
 version = "1.6.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "click", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "colorama", marker = "(python_full_version >= '3.13' and sys_platform == 'win32') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing') or (sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (sys_platform != 'win32' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "ghp-import", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markdown", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "markupsafe", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "packaging", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pathspec", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "platformdirs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyyaml", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyyaml-env-tag", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "watchdog", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "click" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "ghp-import" },
+    { name = "jinja2" },
+    { name = "markdown" },
+    { name = "markupsafe" },
+    { name = "packaging" },
+    { name = "pathspec" },
+    { name = "platformdirs" },
+    { name = "pyyaml" },
+    { name = "pyyaml-env-tag" },
+    { name = "watchdog" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ec/29/f27a4e1eddf72ed3db6e47818fbafe6debbf09fd7051f9c1a007239b46ef/properdocs-1.6.7.tar.gz", hash = "sha256:adc7b16e562890af0e098a7e5b02e3a81c20894a87d6a28d345c9300de73c26e", size = 276141, upload-time = "2026-03-20T20:07:48.167Z" }
 wheels = [
@@ -2338,8 +2322,8 @@ name = "pymdown-extensions"
 version = "12.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "markdown", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyyaml", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "markdown" },
+    { name = "pyyaml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f0/20/bb1b39c1f487e6745bfdca09625db8e8265cdce70d2bac679d930a6cbf72/pymdown_extensions-12.0.tar.gz", hash = "sha256:d00b32be02715676bfec9183371928d1db44e1cd58dbeb76c7f27d9f72682039", size = 867035, upload-time = "2026-09-15T03:32:18.85Z" }
 wheels = [
@@ -2384,7 +2368,7 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 dependencies = [
-    { name = "py4j", marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "py4j", marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or extra == 'group-6-splink-spark-4' or extra == 'group-6-splink-testing'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5e/71/4dd20c69332a2a4bf7ece8a655c9da98e4bd9b6bcea235349c1a00399d57/pyspark-4.1.2.tar.gz", hash = "sha256:fa5d6159f700d0990a07f4f62df1b7449401dccee9cd7d5d6df8957530841602", size = 455428043, upload-time = "2026-05-21T14:49:21.785Z" }
 
@@ -2393,13 +2377,13 @@ name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "exceptiongroup", marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
     { name = "pygments" },
-    { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e4/47/b9efed96c114afcfa3c9d3fe98a76a1d14c74a9e266d397cf6eb64be5e01/pytest-9.1.1.tar.gz", hash = "sha256:1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313", size = 1636369, upload-time = "2026-06-19T10:58:32.857Z" }
 wheels = [
@@ -2523,7 +2507,7 @@ name = "pyyaml-env-tag"
 version = "1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyyaml", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "pyyaml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/2e/79c822141bfd05a853236b504869ebc6b70159afc570e1d5a20641782eaa/pyyaml_env_tag-1.1.tar.gz", hash = "sha256:2eb38b75a2d21ee0475d6d97ec19c63287a7e140231e4214969d0eac923cd7ff", size = 5737, upload-time = "2025-05-13T15:24:01.64Z" }
 wheels = [
@@ -2535,7 +2519,7 @@ name = "pyzmq"
 version = "27.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "(python_full_version >= '3.13' and implementation_name == 'pypy') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (python_full_version < '3.13' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing') or (implementation_name != 'pypy' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (implementation_name != 'pypy' and extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "cffi", marker = "implementation_name == 'pypy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/04/0b/3c9baedbdf613ecaa7aa07027780b8867f57b6293b6ee50de316c9f3222b/pyzmq-27.1.0.tar.gz", hash = "sha256:ac0765e3d44455adb6ddbf4417dcce460fc40a05978c08efdf2948072f6db540", size = 281750, upload-time = "2025-09-08T23:10:18.157Z" }
 wheels = [
@@ -2699,9 +2683,9 @@ version = "0.37.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
-    { name = "rpds-py", version = "0.30.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "rpds-py", version = "2026.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "rpds-py", version = "0.30.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "rpds-py", version = "2026.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz", hash = "sha256:44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8", size = 78036, upload-time = "2025-10-13T15:30:48.871Z" }
 wheels = [
@@ -2713,10 +2697,10 @@ name = "requests"
 version = "2.34.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "certifi", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "charset-normalizer", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "idna", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "urllib3", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "certifi" },
+    { name = "charset-normalizer" },
+    { name = "idna" },
+    { name = "urllib3" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz", hash = "sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed", size = 142856, upload-time = "2026-05-14T19:25:27.735Z" }
 wheels = [
@@ -2728,8 +2712,8 @@ name = "rich"
 version = "15.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "markdown-it-py", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pygments", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "markdown-it-py" },
+    { name = "pygments" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c0/8f/0722ca900cc807c13a6a0c696dacf35430f72e0ec571c4275d2371fca3e9/rich-15.0.0.tar.gz", hash = "sha256:edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36", size = 230680, upload-time = "2026-04-12T08:24:00.75Z" }
 wheels = [
@@ -3071,6 +3055,7 @@ wheels = [
 name = "splink"
 version = "5.0.0"
 source = { editable = "." }
+default-groups = ["dev", "spark-4"]
 dependencies = [
     { name = "duckdb" },
     { name = "pyarrow" },
@@ -3090,11 +3075,11 @@ postgres = [
 ]
 pyspark = [
     { name = "pyspark", version = "3.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or extra == 'group-6-splink-spark-4' or extra == 'group-6-splink-testing'" },
 ]
 spark = [
     { name = "pyspark", version = "3.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or extra == 'group-6-splink-spark-4' or extra == 'group-6-splink-testing'" },
 ]
 sqlite = [
     { name = "rapidfuzz" },
@@ -3108,8 +3093,8 @@ core = [
 dev = [
     { name = "igraph" },
     { name = "mypy" },
-    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "psycopg2-binary" },
     { name = "pyarrow" },
     { name = "pytest" },
@@ -3120,30 +3105,30 @@ dev = [
     { name = "sqlalchemy" },
 ]
 docs = [
-    { name = "altair", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "griffe", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs-llmstxt", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs-material", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs-rss-plugin", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocs-video", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocstrings", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mkdocstrings-python", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "mknotebooks", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "nbconvert", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "neoteroi-mkdocs", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pymdown-extensions", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "altair", marker = "python_full_version >= '3.13'" },
+    { name = "griffe", marker = "python_full_version >= '3.13'" },
+    { name = "jinja2", marker = "python_full_version >= '3.13'" },
+    { name = "mkdocs", marker = "python_full_version >= '3.13'" },
+    { name = "mkdocs-llmstxt", marker = "python_full_version >= '3.13'" },
+    { name = "mkdocs-material", marker = "python_full_version >= '3.13'" },
+    { name = "mkdocs-rss-plugin", marker = "python_full_version >= '3.13'" },
+    { name = "mkdocs-video", marker = "python_full_version >= '3.13'" },
+    { name = "mkdocstrings", marker = "python_full_version >= '3.13'" },
+    { name = "mkdocstrings-python", marker = "python_full_version >= '3.13'" },
+    { name = "mknotebooks", marker = "python_full_version >= '3.13'" },
+    { name = "nbconvert", marker = "python_full_version >= '3.13'" },
+    { name = "neoteroi-mkdocs", marker = "python_full_version >= '3.13'" },
+    { name = "pymdown-extensions", marker = "python_full_version >= '3.13'" },
 ]
 linting = [
     { name = "ruff" },
 ]
 pandas = [
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pandas", version = "3.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pandas", version = "3.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 postgres = [
     { name = "psycopg2-binary" },
@@ -3173,8 +3158,8 @@ testing = [
 ]
 testing-core = [
     { name = "igraph" },
-    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "psycopg2-binary" },
     { name = "pyarrow" },
     { name = "pytest" },
@@ -3189,6 +3174,9 @@ typechecking = [
 typechecking-dev = [
     { name = "ty" },
 ]
+
+[package.group-requires-python]
+docs = ">=3.13"
 
 [package.metadata]
 requires-dist = [
@@ -3282,7 +3270,7 @@ name = "sqlalchemy"
 version = "2.0.54"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "greenlet", marker = "platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "greenlet", marker = "platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/29/9c/271aa905cf2964f841371a97f3e63ab692bf51b4423d0491e67bc7f64037/sqlalchemy-2.0.54.tar.gz", hash = "sha256:baa8521e8ee9f24e75dfc7aaabc08020e551ef0d48d7c3e3536f5cddf277586b", size = 9969559, upload-time = "2026-09-15T21:06:57.337Z" }
@@ -3334,11 +3322,11 @@ wheels = [
 
 [[package]]
 name = "sqlglot"
-version = "30.23.0"
+version = "30.25.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0c/40/4afe7d21cdf3dbb5a7529ea33a0e07055081fb3d37bc0550e7c2278d6ec0/sqlglot-30.23.0.tar.gz", hash = "sha256:34b5b62fa4cbf042ee6b9e829236577b2f8db4538dd20007de2aa5383c92e845", size = 6108071, upload-time = "2026-10-14T21:48:38.209Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/bd/3885516929bfea13c635d5721c468e664defe56a89c073ecf8640f5a5c8a/sqlglot-30.25.0.tar.gz", hash = "sha256:d2d6e4d4865a210b1e33a801b105a6782ef12280cc2b6d0969bdc2634aef427a", size = 6154689, upload-time = "2026-10-26T15:11:29.706Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/73/9e749f3e57ca471bf663eb6d51fbe79b9921c5b7376706cd1cac999c8e2e/sqlglot-30.23.0-py3-none-any.whl", hash = "sha256:b5a645722cb4c6b649e9131b94830d9df9a557e87be63713179d848320f2baa1", size = 783709, upload-time = "2026-10-14T21:48:36.327Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/44/a510d696c082e245832348bcfca5de9adfefd65829cd96fa5bf39244ca7b/sqlglot-30.25.0-py3-none-any.whl", hash = "sha256:7d5a292d5f61b7fc860e65a8fa41083c726db0e27fb6efb224cca63c3a5980f7", size = 798009, upload-time = "2026-10-26T15:11:27.897Z" },
 ]
 
 [[package]]
@@ -3355,7 +3343,7 @@ name = "tinycss2"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "webencodings", marker = "python_full_version >= '3.13' or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "webencodings" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7a/fd/7a5ee21fd08ff70d3d33a5781c255cbe779659bd03278feb98b19ee550f4/tinycss2-1.4.0.tar.gz", hash = "sha256:10c0972f6fc0fbee87c3edb76549357415e94548c1ae10ebccdea16fb404a9b7", size = 87085, upload-time = "2024-10-24T14:58:29.895Z" }
 wheels = [
