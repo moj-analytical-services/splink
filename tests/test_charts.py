@@ -247,3 +247,29 @@ def test_save_offline_chart(tmp_path, test_helpers):
     linker = helper.linker_with_registration([data], settings)
     ch = linker.visualisations.match_weights_chart()
     ch.save_offline_chart(tmp_path / "test_chart.html")
+
+
+def test_load_all_chart_definitions():
+    from splink.internals.charts import load_chart_definition
+
+    chart_defs = [
+        "accuracy_chart.json",
+        "blocking_rule_generated_comparisons.json",
+        "completeness.json",
+        "m_u_parameters_interactive_history.json",
+        "match_weight_histogram.json",
+        "match_weights_interactive_history.json",
+        "match_weights_waterfall.json",
+        "parameter_estimate_comparisons.json",
+        "precision_recall.json",
+        "probability_two_random_records_match_iteration.json",
+        "profile_data.json",
+        "profile_data_outer.json",
+        "roc.json",
+        "tf_adjustment_chart.json",
+        "threshold_selection_tool.json",
+        "unlinkables_chart_def.json",
+    ]
+    for chart_def in chart_defs:
+        defn = load_chart_definition(chart_def)
+        assert isinstance(defn, dict)

@@ -119,6 +119,9 @@ build-backend = "hatchling.build"
 only-include = ["splink"]
 ignore-vcs = true
 
+[tool.hatch.build.targets.wheel]
+ignore-vcs = true
+
 [tool.isort]
 profile = "black"
 
