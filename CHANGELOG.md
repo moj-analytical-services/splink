@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Deprecated
+
+- Deprecated support for python `3.10.x` following end of support for that minor version ([#3378](https://github.com/moj-analytical-services/splink/pull/3378))
+
 ### Fixed
 
 - Qualified Spark `DROP TABLE` with the configured catalog and database so intermediate Delta tables are removed when the session schema differs [#2747](https://github.com/moj-analytical-services/splink/issues/2747)
