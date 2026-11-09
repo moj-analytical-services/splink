@@ -44,4 +44,5 @@ jobs:
       - name: Run tests
         id: run_tests
         run: |
+          java -version
           uv run python -m pytest -v --durations=0 -n 2 -m "spark_only and not needs_pandas" tests/
