@@ -19,13 +19,6 @@ resolution-markers = [
     "python_full_version == '3.11.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version < '3.11'",
 ]
-conflicts = [[
-    { package = "splink", group = "spark-3" },
-    { package = "splink", group = "spark-4" },
-], [
-    { package = "splink", group = "spark-3" },
-    { package = "splink", group = "testing" },
-]]
 
 [options]
 exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
@@ -2357,43 +2350,10 @@ wheels = [
 
 [[package]]
 name = "pyspark"
-version = "3.5.8"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.11.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.11'",
-]
-dependencies = [
-    { name = "py4j", marker = "(python_full_version < '3.12' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/80/5a/3806f44eb47387e8af803508cdd6bbc0df784febf4dc010700be04a1ff89/pyspark-3.5.8.tar.gz", hash = "sha256:54cca0767b21b40e3953ad1d30f8601c53abf9cbda763653289cdcfcac52313c", size = 317817299, upload-time = "2026-01-15T11:46:14.487Z" }
-
-[[package]]
-name = "pyspark"
 version = "4.1.2"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version >= '3.15' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version == '3.14.*' and sys_platform == 'win32'",
-    "python_full_version == '3.14.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.14.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version == '3.13.*' and sys_platform == 'win32'",
-    "python_full_version == '3.13.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.13.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'win32'",
-    "python_full_version == '3.12.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.12.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'win32'",
-    "python_full_version == '3.11.*' and sys_platform == 'emscripten'",
-    "python_full_version == '3.11.*' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.11'",
-]
 dependencies = [
-    { name = "py4j", marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or extra == 'group-6-splink-spark-4' or extra == 'group-6-splink-testing'" },
+    { name = "py4j" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5e/71/4dd20c69332a2a4bf7ece8a655c9da98e4bd9b6bcea235349c1a00399d57/pyspark-4.1.2.tar.gz", hash = "sha256:fa5d6159f700d0990a07f4f62df1b7449401dccee9cd7d5d6df8957530841602", size = 455428043, upload-time = "2026-05-21T14:49:21.785Z" }
 
@@ -3099,12 +3059,10 @@ postgres = [
     { name = "sqlalchemy" },
 ]
 pyspark = [
-    { name = "pyspark", version = "3.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or extra == 'group-6-splink-spark-4' or extra == 'group-6-splink-testing'" },
+    { name = "pyspark" },
 ]
 spark = [
-    { name = "pyspark", version = "3.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or extra != 'group-6-splink-spark-3' or extra == 'group-6-splink-spark-4' or extra == 'group-6-splink-testing'" },
+    { name = "pyspark" },
 ]
 sqlite = [
     { name = "rapidfuzz" },
@@ -3159,22 +3117,19 @@ postgres = [
     { name = "psycopg2-binary" },
     { name = "sqlalchemy" },
 ]
-spark-3 = [
-    { name = "pyspark", version = "3.5.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-]
 spark-4 = [
-    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" } },
+    { name = "pyspark" },
 ]
 sqlite = [
     { name = "rapidfuzz" },
 ]
 testing = [
     { name = "igraph" },
-    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra != 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
-    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and extra != 'group-6-splink-spark-3') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-spark-4') or (extra == 'group-6-splink-spark-3' and extra == 'group-6-splink-testing')" },
+    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "psycopg2-binary" },
     { name = "pyarrow" },
-    { name = "pyspark", version = "4.1.2", source = { registry = "https://pypi.org/simple" } },
+    { name = "pyspark" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
@@ -3261,7 +3216,6 @@ postgres = [
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "sqlalchemy", specifier = ">=2.0.0" },
 ]
-spark-3 = [{ name = "pyspark", marker = "python_full_version < '3.12'", specifier = "<4" }]
 spark-4 = [{ name = "pyspark", specifier = ">=4.0.0" }]
 sqlite = [{ name = "rapidfuzz", specifier = ">=3.10.0" }]
 testing = [
