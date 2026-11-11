@@ -47,7 +47,9 @@ Splink performs best with input data containing **multiple** columns that are **
 
 High correlation occurs when one column is highly predictable from another - for instance, city can be predicted from postcode.  Correlation is particularly problematic if **all** of your input columns are highly correlated.
 
-Splink is not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
+Splink is not well suited to linking a single column containing a 'bag of words'. For example, a table with a single 'address' column, and no other details.
+
+If you need to match UK addresses, see [uk_address_matcher](https://github.com/moj-analytical-services/uk_address_matcher), a free tool we've developed specifically for address matching.
 
 ## Documentation
 
