@@ -42,9 +42,7 @@ dev = [
     { "include-group" = "testing-core" },
     { "include-group" = "typechecking" },
 ]
-spark-3 = [
-  "pyspark<4; python_version < '3.12'",
-]
+
 spark-4 = ["pyspark>=4.0.0"]
 docs = [
     "altair>=5.0.1",
@@ -99,12 +97,6 @@ exclude-newer = "7 days"
 default-groups = [
     "dev",
     "spark-4"
-]
-conflicts = [
-  [
-    { group = "spark-4" },
-    { group = "spark-3" },
-  ]
 ]
 
 [tool.uv.dependency-groups]
