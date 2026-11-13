@@ -41,7 +41,7 @@ conf.set("spark.sql.codegen.wholeStage", "false")
 
 
 # Add custom similarity functions, which are bundled with Splink
-# documented here: https://github.com/moj-analytical-services/splink_scalaudfs
+# documented here: https://github.com/ADBond/splink_scalaudfs
 path = similarity_jar_location()
 conf.set("spark.jars", path)
 
