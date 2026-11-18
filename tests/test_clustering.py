@@ -125,3 +125,57 @@ def test_clustering_no_edges(test_helpers, dialect):
     # due to blocking rules, df_predict will be empty
     df_predict = linker.inference.predict()
     linker.clustering.cluster_pairwise_predictions_at_threshold(df_predict, 0.95)
+
+
+def test_clustering_high_match_weight_threshold():
+    # https://github.com/moj-analytical-services/splink/issues/3002
+    # Match probability saturates to 1.0 for match weights above ~53, so
+    # filtering edges in probability space cannot distinguish high match
+    # weights. Edges are now filtered in match weight space when the
+    # threshold is given as a match weight.
+    target_mw = 53
+
+    def u_prob_for_mw(mw):
+        return 0.5 / (2**mw)
+
+    settings = SettingsCreator(
+        link_type="dedupe_only",
+        comparisons=[
+            cl.ExactMatch("first_name").configure(
+                m_probabilities=[0.5, 0.5],
+                u_probabilities=[
+                    u_prob_for_mw(target_mw),
+                    1 - u_prob_for_mw(target_mw),
+                ],
+            ),
+        ],
+        probability_two_random_records_match=0.5,
+    )
+
+    data = [
+        {"unique_id": 1, "first_name": "Andy"},
+        {"unique_id": 2, "first_name": "Andy"},
+    ]
+
+    db_api = DuckDBAPI()
+    linker = Linker(db_api.register(data), settings)
+
+    df_predict = linker.inference.predict()
+    predictions = df_predict.as_record_list()
+    assert len(predictions) == 1
+    assert predictions[0]["match_weight"] == target_mw
+
+    # The only edge has match weight 53, so clustering at a threshold of 100
+    # must keep the two records in separate clusters
+    df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, threshold_match_weight=100
+    )
+    cluster_ids = [r["cluster_id"] for r in df_clusters.as_record_list()]
+    assert len(set(cluster_ids)) == 2
+
+    # At a threshold at or below the edge's match weight they cluster together
+    df_clusters = linker.clustering.cluster_pairwise_predictions_at_threshold(
+        df_predict, threshold_match_weight=target_mw
+    )
+    cluster_ids = [r["cluster_id"] for r in df_clusters.as_record_list()]
+    assert len(set(cluster_ids)) == 1
