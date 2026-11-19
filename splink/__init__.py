@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from splink.internals.duckdb.database_api import DuckDBAPI
     from splink.internals.spark.database_api import SparkAPI
 
-_LOWEST_SUPPORTED_MINOR_VERSION = 10
+_LOWEST_SUPPORTED_MINOR_VERSION = 11
 
 if (installed_minor_version := version_info.minor) < _LOWEST_SUPPORTED_MINOR_VERSION:
     warn(
