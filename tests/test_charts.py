@@ -165,10 +165,13 @@ def test_parameter_estimate_charts(dialect, test_helpers):
             cl.LevenshteinAtThresholds("first_name", [1]),
             cl.LevenshteinAtThresholds("surname", [1]),
         ],
+        "max_iterations": 1,
     }
     helper = test_helpers[dialect]
 
     linker = helper.linker_with_registration([data], settings)
+
+    linker.training.estimate_m_from_label_column("true_match_id")
 
     linker.training.estimate_probability_two_random_records_match(
         ["l.true_match_id = r.true_match_id"], recall=1.0
@@ -178,11 +181,13 @@ def test_parameter_estimate_charts(dialect, test_helpers):
         "l.surname = r.surname",
         fix_u_probabilities=False,
         fix_probability_two_random_records_match=True,
+        max_pairs=10_000,
     )
     linker.training.estimate_parameters_using_expectation_maximisation(
         "l.first_name = r.first_name",
         fix_u_probabilities=False,
         fix_probability_two_random_records_match=True,
+        max_pairs=10_000,
     )
 
     exact_gender_m_estimates = [
@@ -204,7 +209,7 @@ def test_parameter_estimate_charts(dialect, test_helpers):
         ],
     }
     linker = helper.linker_with_registration([data], settings)
-    linker.training.estimate_u_using_random_sampling(1e6)
+    linker.training.estimate_u_using_random_sampling(10_000)
 
     linker.visualisations.parameter_estimate_comparisons_chart()
 
