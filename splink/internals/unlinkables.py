@@ -25,8 +25,8 @@ def unlinkables_data(linker: Linker) -> list[dict[str, Any]]:
 
     sql = f"""
         select
-        round(match_weight, 2) as match_weight,
-        round(match_probability, 5) as match_probability
+        round(match_weight, 1) as match_weight,
+        match_probability
         from {self_link_df.physical_name}
     """
 
@@ -34,21 +34,21 @@ def unlinkables_data(linker: Linker) -> list[dict[str, Any]]:
 
     sql = """
         select
-        max(match_weight) as match_weight,
-        match_probability,
+        match_weight,
+        max(match_probability) as match_probability,
         count(*) / cast( sum(count(*)) over () as float) as prop
         from __splink__df_round_self_link
-        group by match_probability
-        order by match_probability
+        group by match_weight
+        order by match_weight
     """
 
     pipeline.enqueue_sql(sql, "__splink__df_unlinkables_proportions")
 
     sql = """
         select *,
-        sum(prop) over(order by match_probability) as cum_prop
+        sum(prop) over(order by match_weight) as cum_prop
         from __splink__df_unlinkables_proportions
-        where match_probability < 1
+        where match_weight < 60
     """
     pipeline.enqueue_sql(sql, "__splink__df_unlinkables_proportions_cumulative")
     data = linker._db_api.sql_pipeline_to_splink_dataframe(pipeline)
