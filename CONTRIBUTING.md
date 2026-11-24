@@ -27,7 +27,7 @@ then clone your fork to your computer.
 Then, you can edit the documentation in the [docs folder](https://github.com/moj-analytical-services/splink/tree/master/docs)
 (and API documentation, which can be found as docstrings in the code itself) locally.
 To see what the docs will look like with your changes, you can
-[build the docs site locally](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/build_docs_locally.html).
+[build the docs site locally](https://moj-analytical-services.github.io/splink/dev_guides/changing_splink/contributing_to_docs.html).
 When you are happy with your changes, commit and push them to your fork, then
 create a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork).
 
